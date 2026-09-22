@@ -912,7 +912,8 @@ export default function VideoForm({ initialValue, onCancel, onSubmit, loading = 
                       </div>
                     </div>
                     <p className="mt-1.5 text-xs text-gray-500">
-                      Devine gratuit în aplicație și pe site la momentul ales, fus {VIDEO_RELEASE_TIMEZONE}.
+                      Devine gratuit în aplicație la momentul ales. Pe site rămâne disponibil doar ca
+                      previzualizare, fus {VIDEO_RELEASE_TIMEZONE}.
                     </p>
                     {errors.publicReleaseAt ? (
                       <p className="mt-1.5 text-xs text-red-600">{errors.publicReleaseAt}</p>
