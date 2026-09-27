@@ -210,7 +210,22 @@ async function handler(req, res) {
     );
 
     const responsePayload = {
-      videos,
+      // The root description is already resolved for the requested locale.
+      // Lists need localized titles/sources, not every translated transcript.
+      // Clone the DTOs so detail responses and cached rows remain complete.
+      videos: videos.map((video) => ({
+        ...video,
+        ...(video.locales
+          ? {
+              locales: Object.fromEntries(
+                Object.entries(video.locales).map(([key, entry]) => {
+                  const { description, ...metadata } = entry;
+                  return [key, metadata];
+                })
+              ),
+            }
+          : {}),
+      })),
       locale,
       premiumActive,
       loggedIn: Boolean(uid),
