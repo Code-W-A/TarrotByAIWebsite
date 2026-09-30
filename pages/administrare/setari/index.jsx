@@ -356,6 +356,34 @@ function SettingsScreen() {
         </div>
 
         {/* Error */}
+        {!loading && (
+          <section className="mb-6 rounded-xl border bg-white p-5">
+            <h2 className="font-semibold">Locul nașterii — astrograme și sinastrii</h2>
+            <p className="my-2 text-sm text-gray-600">GeoNames este implicit. Poți activa Google dacă GeoNames nu este disponibil. Se aplică și generatoarelor PDF, la următoarea căutare.</p>
+            <label className="flex items-center gap-3">
+              <button type="button" role="switch" aria-label="Folosește Google pentru locațiile astro"
+                aria-checked={settings.astroLocationProvider === "google"} disabled={saving}
+                className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 ${settings.astroLocationProvider === "google" ? "bg-emerald-500" : "bg-slate-400"}`}
+                onClick={async () => {
+                  const provider = settings.astroLocationProvider === "google" ? "geonames" : "google";
+                  setSaving(true); setError(""); setSuccess("");
+                  try {
+                    const response = await fetch("/api/dashboard/settings", {
+                      method: "POST", headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ astroLocationProvider: provider }),
+                    });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.error || "Eroare la salvare");
+                    setSettings(result.settings);
+                    setSuccess(`Furnizor locații: ${provider === "google" ? "Google" : "GeoNames"}.`);
+                  } catch (e) { setError(e.message); } finally { setSaving(false); }
+                }}>
+                <span className={`inline-block h-5 w-5 rounded-full bg-white transition-transform ${settings.astroLocationProvider === "google" ? "translate-x-6" : "translate-x-1"}`} />
+              </button>
+              {settings.astroLocationProvider === "google" ? "Google activ" : "GeoNames activ"}
+            </label>
+          </section>
+        )}
         {error && (
           <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-800">
             {error}

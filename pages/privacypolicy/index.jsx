@@ -10,7 +10,7 @@ const COPY = {
   ro: {
     title: "Politica de confidențialitate | Cristina Zurba",
     heading: "Politica de confidențialitate",
-    updated: "Ultima actualizare: 6 septembrie 2026",
+    updated: "Ultima actualizare: 27 septembrie 2026",
     intro: "Această politică explică modul în care SPIRIT SOARE ȘI LUNĂ S.R.L. prelucrează datele personale când folosești site-ul sau aplicația Cristina Zurba pe iOS ori Android.",
     controller: "Operatorul datelor",
     data: "Date pe care le putem prelucra",
@@ -18,7 +18,7 @@ const COPY = {
     purposes: "De ce folosim datele",
     purposesBody: "Folosim datele pentru autentificare, furnizarea analizelor și conținutului solicitat, sincronizarea contului între dispozitive, suport, siguranță, diagnosticarea erorilor, prevenirea abuzului și îmbunătățirea aplicației. Datele de contact nu sunt cerute din nou după Sign in with Apple dacă Apple sau contul existent le furnizează deja.",
     partners: "Furnizori și publicitate",
-    partnersBody: "Folosim Firebase (Authentication, Firestore și Storage) pentru conturi, datele aplicației și fișierele încărcate; Google AdMob și User Messaging Platform pentru afișarea și gestionarea reclamelor; și Sentry pentru raportarea erorilor. Acești furnizori pot prelucra date tehnice, identificatori sau date de utilizare în numele nostru, conform propriilor politici.",
+    partnersBody: "Folosim Firebase (Authentication, Firestore și Storage) pentru conturi, datele aplicației și fișierele încărcate; Google AdMob și User Messaging Platform pentru reclame și gestionarea consimțământului; și Sentry pentru raportarea erorilor. Versiunile aplicației care includ medierea publicitară pot solicita reclame și de la Unity Ads și Liftoff Monetize (Vungle), prin AdMob. În funcție de serviciu și de opțiunile tale, furnizorii pot prelucra identificatori de dispozitiv sau publicitate, adresa IP, informații tehnice și interacțiuni cu reclamele, pentru livrare, măsurare și prevenirea fraudei. Partenerii publicitari pot acționa și ca operatori independenți, conform propriilor politici. Opțiunile de consimțământ și de refuz al vânzării sau partajării datelor sunt transmise partenerilor integrați.",
     tracking: "Reclame, GDPR și App Tracking Transparency",
     trackingBody: "Cerem consimțământul GDPR atunci când este necesar înainte de solicitarea reclamelor pe iOS și Android. Pe iOS, cerem separat permisiunea App Tracking Transparency numai când utilizatorul este eligibil pentru reclame personalizate. ATT este o permisiune specifică iOS; pe Android se aplică opțiunile de consimțământ și personalizare ale UMP/Google. Dacă refuzi consimțământul sau permisiunea ATT, aplicația rămâne funcțională și poate afișa numai reclame nepersonalizate. Preferințele pot fi redeschise din Settings → Privacy options.",
     apple: "Sign in with Apple",
@@ -34,7 +34,7 @@ const COPY = {
   en: {
     title: "Privacy Policy | Cristina Zurba",
     heading: "Privacy Policy",
-    updated: "Last updated: September 6, 2026",
+    updated: "Last updated: September 27, 2026",
     intro: "This policy explains how SPIRIT SOARE ȘI LUNĂ S.R.L. processes personal data when you use the Cristina Zurba website or mobile application on iOS or Android.",
     controller: "Data controller",
     data: "Data we may process",
@@ -42,7 +42,7 @@ const COPY = {
     purposes: "Why we use data",
     purposesBody: "We use data for authentication, providing requested analyses and content, account synchronisation across devices, support, security, error diagnosis, abuse prevention and service improvement. We do not require contact data again after Sign in with Apple when Apple or an existing account already provides it.",
     partners: "Service providers and advertising",
-    partnersBody: "We use Firebase (Authentication, Firestore and Storage) for accounts, app data and uploaded files; Google AdMob and User Messaging Platform for advertising and consent management; and Sentry for error reporting. These providers may process technical data, identifiers or usage data on our behalf, under their own policies.",
+    partnersBody: "We use Firebase (Authentication, Firestore and Storage) for accounts, app data and uploaded files; Google AdMob and User Messaging Platform for advertising and consent management; and Sentry for error reporting. App versions with ad mediation may also request ads from Unity Ads and Liftoff Monetize (Vungle) through AdMob. Depending on the service and your choices, providers may process device or advertising identifiers, IP addresses, technical information and ad interactions for delivery, measurement and fraud prevention. Advertising partners may also act as independent controllers under their own policies. Consent and opt-out choices for the sale or sharing of data are forwarded to the integrated partners.",
     tracking: "Advertising, GDPR and App Tracking Transparency",
     trackingBody: "We request GDPR consent where required before requesting ads on iOS and Android. On iOS, we separately request App Tracking Transparency permission only when a user is eligible for personalised advertising. ATT is an iOS-specific permission; on Android, UMP/Google consent and personalisation choices apply. If you decline consent or ATT permission, the app remains functional and may show only non-personalised ads. Choices can be reopened from Settings → Privacy options.",
     apple: "Sign in with Apple",
@@ -97,6 +97,12 @@ export default function PrivacyPolicyPage({ contentLanguage }) {
             <section className="mt-8" key={heading}>
               <h2 className="text-xl font-semibold text-slate-900">{heading}</h2>
               <p className="mt-3 leading-relaxed text-slate-700">{body}</p>
+              {heading === copy.partners && (
+                <p className="mt-3 flex flex-wrap gap-4 text-indigo-700 underline">
+                  <a href="https://unity.com/legal/privacy-policy">Unity Ads — Privacy</a>
+                  <a href="https://liftoff.ai/privacy-policy/">Liftoff Monetize — Privacy</a>
+                </p>
+              )}
             </section>
           ))}
           <Link href="/privacy-choices" locale={router.locale} className="mt-8 inline-block font-semibold text-indigo-700 underline-offset-2 hover:underline">

@@ -12,16 +12,19 @@ import {
   validateForceUpdateMinVersions,
 } from "../../../lib/mobileUpdatePromptSettings";
 import { requireDashboardAccess } from "../../../lib/requireAuth";
+import { getAstroLocationProvider } from "../../../lib/astroLocations";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 async function mergeSettingsForResponse() {
-  const [global, mobileStatus] = await Promise.all([
+  const [global, mobileStatus, astroLocationProvider] = await Promise.all([
     getGlobalSettings(),
     loadMobileUpdateStatus(),
+    getAstroLocationProvider(),
   ]);
   return {
     ...global,
+    astroLocationProvider,
     mobileUpdatePromptEnabled: mobileStatus.update,
     mobileForceUpdateEnabled: mobileStatus.forceUpdate,
     mobileMinAppVersionIos: mobileStatus.minAppVersionIos,
@@ -49,6 +52,9 @@ export default async function handler(req, res) {
   if (req.method === "POST") {
     try {
       const body = req.body || {};
+      if (body.astroLocationProvider !== undefined && !["google", "geonames"].includes(body.astroLocationProvider)) {
+        return res.status(400).json({ error: "Furnizor de locații invalid." });
+      }
       const subscriptionUpdate =
         typeof body.iosPremiumSubscriptionsEnabled === "boolean"
           ? body.iosPremiumSubscriptionsEnabled
@@ -96,6 +102,7 @@ export default async function handler(req, res) {
         mobileForceUpdate === undefined &&
         !mobileMinIosProvided &&
         !mobileMinAndroidProvided &&
+        body.astroLocationProvider === undefined &&
         !vatProvided
       ) {
         return res.status(400).json({ error: "No valid settings to update" });
@@ -161,6 +168,9 @@ export default async function handler(req, res) {
           { iosPremiumSubscriptionsEnabled: subscriptionUpdate },
           "dashboard"
         );
+      }
+      if (body.astroLocationProvider !== undefined) {
+        await updateGlobalSettings({ astroLocationProvider: body.astroLocationProvider }, "dashboard");
       }
       if (Object.keys(billingProviderUpdates).length > 0) {
         await updateGlobalSettings(billingProviderUpdates, "dashboard");

@@ -2,6 +2,7 @@ import React, { useRef, useState } from "react";
 import Head from "next/head";
 import CustomDrawer from "../../../components/Dashboard/CustomDrawer";
 import LocalPasswordGate from "../../../components/Dashboard/LocalPasswordGate";
+import AstroLocationInput from "../../../components/Dashboard/AstroLocationInput";
 
 const EMPTY_PERSON = {
   full_name: "",
@@ -34,7 +35,7 @@ const labelStyle = {
 
 const fieldWrapStyle = { marginBottom: 12 };
 
-function PersonForm({ title, person, onChange, onGeocode, geocoding }) {
+function PersonForm({ title, person, onChange }) {
   const set = (field) => (e) => onChange({ ...person, [field]: e.target.value });
 
   return (
@@ -95,31 +96,7 @@ function PersonForm({ title, person, onChange, onGeocode, geocoding }) {
 
       <div style={fieldWrapStyle}>
         <label style={labelStyle}>Loc nașterii</label>
-        <div style={{ display: "flex", gap: 8 }}>
-          <input
-            style={{ ...inputStyle, flex: 1 }}
-            value={person.place}
-            onChange={set("place")}
-            placeholder="Slatina, Romania"
-          />
-          <button
-            type="button"
-            onClick={onGeocode}
-            disabled={geocoding}
-            style={{
-              padding: "10px 14px",
-              borderRadius: 8,
-              border: "none",
-              background: "#4CAF50",
-              color: "#fff",
-              fontWeight: 600,
-              cursor: geocoding ? "default" : "pointer",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {geocoding ? "..." : "Caută coordonate"}
-          </button>
-        </div>
+        <AstroLocationInput person={person} onChange={onChange} inputStyle={inputStyle} />
       </div>
 
       <div style={{ display: "flex", gap: 10 }}>
@@ -144,7 +121,6 @@ function AstrogramePdfTool() {
   const [person2, setPerson2] = useState({ ...EMPTY_PERSON });
 
   const [loading, setLoading] = useState(false);
-  const [geocodingKey, setGeocodingKey] = useState("");
   const [error, setError] = useState("");
   const [html, setHtml] = useState("");
   const [resultName, setResultName] = useState("");
@@ -164,28 +140,6 @@ function AstrogramePdfTool() {
       throw new Error(data?.error || "Eroare necunoscută.");
     }
     return data;
-  };
-
-  const handleGeocode = async (which) => {
-    const target =
-      which === "person" ? person : which === "person1" ? person1 : person2;
-    const setter =
-      which === "person" ? setPerson : which === "person1" ? setPerson1 : setPerson2;
-
-    if (!target.place?.trim()) {
-      setError("Completează locul nașterii înainte de a căuta coordonatele.");
-      return;
-    }
-    setError("");
-    setGeocodingKey(which);
-    try {
-      const geo = await callApi({ mode: "geocode", query: target.place });
-      setter({ ...target, lat: geo.lat, lon: geo.lon, place: geo.formattedAddress || target.place });
-    } catch (e) {
-      setError(e.message || "Nu am putut găsi coordonatele.");
-    } finally {
-      setGeocodingKey("");
-    }
   };
 
   const handleGenerate = async () => {
@@ -263,8 +217,6 @@ function AstrogramePdfTool() {
             title="Date persoană"
             person={person}
             onChange={setPerson}
-            onGeocode={() => handleGeocode("person")}
-            geocoding={geocodingKey === "person"}
           />
         ) : (
           <>
@@ -272,15 +224,11 @@ function AstrogramePdfTool() {
               title="Persoana 1"
               person={person1}
               onChange={setPerson1}
-              onGeocode={() => handleGeocode("person1")}
-              geocoding={geocodingKey === "person1"}
             />
             <PersonForm
               title="Persoana 2"
               person={person2}
               onChange={setPerson2}
-              onGeocode={() => handleGeocode("person2")}
-              geocoding={geocodingKey === "person2"}
             />
           </>
         )}
