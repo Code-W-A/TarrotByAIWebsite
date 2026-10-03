@@ -1,0 +1,83 @@
+# Ebookuri: configurare și activare
+
+Implementare: Sanity Studio separat, Next.js API, Firebase UID comun și Stripe pe site și în aplicație. Citirea este online; traducerile sunt manuale. Codul nu creează conturi sau abonamente externe și nu activează producția.
+
+## Sanity
+
+### Configurația creată la 3 octombrie 2026
+
+- Proiect: **Cristina Zurba Ebookuri**, `rvz9v34h`; organizație `of0hkcpw2`.
+- Dataset `production`: **privat**, verificat prin API autentificat; momentan fără cărți.
+- Token server **Viewer**, doar citire, salvat în `.env.local` ignorat de Git. Nu este inclus în bundle-ul Studio.
+- CORS cu credentials: `https://www.cristinazurba.com` și `http://localhost:3000`.
+- Proiectul este pe **Growth Trial de 30 de zile**, fără abonament plătit activat. Continuitatea datasetului privat trebuie verificată înainte de expirarea trialului.
+- Flagurile ebookurilor rămân dezactivate. Configurația Vercel va fi făcută manual de proprietar; webhookurile și activarea sunt încă în așteptare. Studio a fost construit și verificat în Chrome, autentificat cu contul Cristina Zurba, la `http://localhost:3000/ebook-studio/structure/cartiSiEditii`.
+
+### Pașii de activare
+
+1. Creați proiectul, alegeți Growth și creați un dataset **privat**. Planul Free permite doar dataseturi publice; Growth permite dataseturi private ([planurile Sanity](https://www.sanity.io/pricing)). Configurați membrii Studio; dashboardul și Studio au autentificări separate.
+2. Setați `SANITY_PROJECT_ID`, `SANITY_DATASET`, `SANITY_READ_TOKEN` numai în mediul serverului. Tokenul trebuie să poată lista dataseturile pentru verificarea `aclMode` și să citească documentele/preview. Nu folosiți `NEXT_PUBLIC_` pentru token.
+3. Instalați separat Studio: `npm ci --prefix ebook-studio`. `npm run build` construiește Studio în `public/ebook-studio`, apoi site-ul. React-ul site-ului rămâne la versiunea existentă. Fără configurație, buildul creează o pagină informativă.
+4. Adăugați originile site-ului în Sanity CORS pentru Studio și permiteți credentials. Fișierele Studio sunt servite din `/ebook-studio/`; editorul se deschide la `/dashboard/ebooks`.
+5. Configurați webhook Sanity POST `/api/ebooks/sanity-webhook`, la creare/modificare/ștergere, filtrul `_type in ["ebook", "ebookEdition"]`, proiecția `{_id,_type}`, secretul `SANITY_EBOOK_WEBHOOK_SECRET`. Backendul verifică semnătura și recitește metadata publicată; nu persistă manuscrisele în Firestore.
+6. Creați cartea și publicați metadata, apoi ediția RO. Publicați celelalte limbi când sunt gata. Folosiți „Previzualizează în site” pentru drafturi și „Sincronizează catalogul” dacă webhookul nu a fost instalat încă.
+
+Capitolele păstrează `_key` generat de Studio la editare/reordonare; nu ștergeți și recreați capitole doar pentru corecturi. Pentru traduceri puteți copia structura capitolelor și înlocui textul. Progresul este separat pe limbă. Arhivarea cărții păstrează lectura pentru cumpărători; ștergerea și unpublish sunt dezactivate în Studio pentru aceste tipuri. Validatorul împiedică eliminarea capitolelor deja publicate.
+
+**Imaginile standard Sanity sunt publice prin URL, inclusiv într-un dataset privat.** Alegerea acceptată este text privat + imagini CDN. Protecția nu împiedică fotografierea sau extragerea textului de pe dispozitivul unui cumpărător.
+
+## Stripe și facturare
+- Folosește `STRIPE_SECRET_KEY`, `STRIPE_FIXED_VAT_TAX_RATE_ID`, `NEXT_PUBLIC_SITE_URL` și setarea TVA existente. Prețul din Studio este net, ca la cursuri; catalogul și checkoutul afișează/adaugă TVA conform setărilor existente.
+- Checkoutul folosește formularul de facturare existent și normalizarea server. Factura Oblio folosește aceleași utilitare fiscale și politica e-Factura ca la cursuri. Dacă serviciul lipsește sau răspunsul este ambiguu, plata rămâne validă și factura este marcată `pending_manual` în `payments`, fără retry extern care poate dubla factura.
+- Configurați un endpoint **separat** `/api/ebooks/stripe-webhook` pentru `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `charge.refunded`, cu `STRIPE_EBOOK_WEBHOOK_SECRET`.
+- `EBOOKS_STRIPE_ENABLED=true` activează checkoutul. Confirmarea succesului din URL nu acordă acces. Doar webhookul semnat acordă acces.
+
+## Stripe în aplicația mobilă
+
+- Prețul și moneda vin din metadata publicată în Sanity, identic cu site-ul. Prețul afișat include TVA; serverul recitește prețul net publicat înainte de fiecare checkout. O modificare se aplică sesiunilor noi, fără să schimbe suma unei sesiuni deja create.
+- Aplicația folosește `CourseCheckoutBillingForm` și Stripe Checkout într-un WebView, ca la cursuri. Cererea `POST /api/ebooks/{id}/checkout` include `billingDetails` și `platform: "ios" | "android"`; headerul `x-app-platform` identifică de asemenea platforma.
+- Răspunsul este `{url, returnUrlBase}`. URL-urile de succes/anulare sunt generate exclusiv de server, pe domeniul site-ului, pentru cartea curentă. Aplicația recunoaște doar revenirea la acel URL și verifică accesul prin API. Revenirea cu `checkout=success` nu acordă acces.
+- `GET /api/ebooks/config` expune `websiteBilling` și `mobileBilling: {web, android, ios}`. Butonul de plată este dezactivat când checkoutul nu este configurat.
+- Pe iOS se aplică aceeași politică precum la cursuri: `settings/global.iosCoursesHidden` trebuie să fie explicit `false` pentru checkout. Dacă setările nu pot fi citite, plata iOS este blocată. Backendul verifică atât platforma din corp, cât și headerul; citirea cărților deja cumpărate rămâne disponibilă.
+- Ebookurile nu au produse Apple/Google, confirmare RevenueCat sau restaurare prin magazine. După reinstalare, autentificarea în același cont încarcă automat „Cărțile mele”. Fluxurile RevenueCat existente pentru alte produse rămân separate.
+
+## Firebase, UI și rollout
+- Noile colecții `ebookRegistry`, `ebookTransactions`, `ebookPaymentEvents`, `ebookCheckouts`, `ebookStripePayments`, `users/{uid}/ebookAccess`, `users/{uid}/ebookProgress` sunt server-only. Fragmentele sunt în `expo-mobile-app/firestore.rules`: **integrați** regulile în regulile reale, nu înlocuiți producția cu acel fișier fragment. Verificați că regulile wildcard existente nu permit scrieri în colecțiile noi.
+- Activați `EBOOKS_ENABLED=true` numai cu dataset privat și configurație server. UI: `NEXT_PUBLIC_EBOOKS_ENABLED=true` pe site și `EXPO_PUBLIC_EBOOKS_ENABLED=true` în aplicație.
+- API: catalog `/api/ebooks`, detalii `/{id}`, proprietate `/purchased`, capitol `/{id}/chapters/{chapterId}`, progres GET/PUT `/{id}/progress`, checkout `/{id}/checkout`. `locale` selectează ediția publicată sau RO. Metadatele nu conțin textul capitolelor.
+- Pages: `/ebooks`, `/ebooks/mine`, `/ebooks/{id}`, `/ebooks/{id}/read`. Ecranul principal mobil oferă intrare în catalog.
+- Înainte de activare: testați o cumpărare Stripe test → lectură mobilă cu același cont; o cumpărare Stripe din aplicație → lectură web; reinstalare/autentificare; refund; duplicate/out-of-order webhook; cont diferit; capitole și imagini; RTL și traducere lipsă; progres între dispozitive.
+- Urmăriți erorile `[ebooks]`, webhookurile retry și tranzacțiile în așteptare. Nu confundați buildul/testele locale cu dovada unei cumpărări reale.
+
+Nu s-au făcut deployment, abonare Sanity, scrieri Firebase de producție, creare produse sau submit în magazine prin implementarea locală.
+
+## Verificare locală și activare
+
+Testele acoperă prețul calculat pe server, TVA, prețuri distincte și modificate în Sanity, izolarea conturilor, accesul după webhook, plăți în așteptare, webhookuri duplicate, refunduri, facturare și revenirea WebView pe URL-ul corect. Se verifică separat regresiile cursurilor, Premium, analizelor și RevenueCat existent.
+
+Buildul Studio și exporturile Expo verifică integrarea locală; nu validează o tranzacție reală, un binar nativ sau aprobarea din magazine. Verificarea TypeScript completă a aplicației mobile are erori existente în alte module; erorile modulului ebookurilor sunt verificate separat.
+
+Înainte de activare, configurați Sanity privat, Stripe și webhookul dedicat, apoi testați Stripe în mediul de test, facturarea și accesul între dispozitive/platforme. Configurările externe, deploymentul și lansarea în magazine rămân pași expliciți de activare.
+
+## Lista pentru Vercel (configurare manuală)
+
+În proiectul care servește `www.cristinazurba.com`, Settings → Environment Variables → Production:
+
+| Variabilă | Valoare / sursă |
+| --- | --- |
+| `SANITY_PROJECT_ID` | `rvz9v34h` |
+| `SANITY_DATASET` | `production` |
+| `SANITY_READ_TOKEN` | Din fișierul local `.env.local`; marcat Sensitive, exclusiv server |
+| `SANITY_EBOOK_WEBHOOK_SECRET` | Aceeași cheie ca în webhookul Sanity; exclusiv server |
+| `STRIPE_EBOOK_WEBHOOK_SECRET` | Cheia endpointului dedicat ebookurilor din Stripe, din același mod test/live ca `STRIPE_SECRET_KEY` |
+| `EBOOKS_ENABLED` | `true` la activarea API-ului |
+| `NEXT_PUBLIC_EBOOKS_ENABLED` | `true` la activarea catalogului web |
+| `EBOOKS_STRIPE_ENABLED` | Inițial `false`; `true` după configurarea și verificarea plății |
+
+Păstrați variabilele Stripe, Firebase și Oblio existente. Cheia Stripe locală este de **test**; nu o copiați peste cheia de producție. `NEXT_PUBLIC_SITE_URL` trebuie să fie `https://www.cristinazurba.com`.
+
+1. Adăugați variabilele și faceți deploymentul versiunii care include ebookurile; modificarea variabilelor singură nu actualizează deploymentul existent. Verificați `/api/ebooks/config` și `/dashboard/ebooks`.
+2. Activați webhookul Sanity numai după ce endpointul este publicat și API-ul ebookurilor este activ.
+3. În Stripe configurați endpointul dedicat `https://www.cristinazurba.com/api/ebooks/stripe-webhook`, pentru `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `charge.refunded`. Adăugați secretul în Vercel și redeployați.
+4. Verificați fluxul în mod Stripe test într-un mediu separat; activați checkoutul în producție după validare. Preview deployments necesită propriile variabile, URL-uri și CORS dacă se verifică editorul acolo.
+5. Pentru aplicație, setați `EXPO_PUBLIC_EBOOKS_ENABLED=true` în mediul buildului mobil, apoi publicați separat versiunea aplicației. Această variabilă nu se activează prin Vercel.

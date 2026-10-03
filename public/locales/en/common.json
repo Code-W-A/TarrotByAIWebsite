@@ -617,5 +617,9 @@
   "horoscopeViewVideos": "Watch {sign} videos",
   "shareCategory": "Share",
   "shareCategoryMessage": "Discover {category} videos on Cristina Zurba",
-  "linkCopied": "Link copied!"
+  "linkCopied": "Link copied!",
+  "premiumRecurringNotice": "Premium subscription — {{price}}/month. Payment renews automatically every month until canceled.",
+  "premiumRecurringConsent": "I understand and accept recurring monthly payments until I cancel the subscription.",
+  "premiumRecurringRequired": "Accept recurring payments before continuing to payment.",
+  "premiumRecurringExpired": "The offer has changed or expired. Check the price and confirm again."
 }

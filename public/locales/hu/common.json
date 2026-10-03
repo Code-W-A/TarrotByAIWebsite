@@ -609,5 +609,9 @@
   "supportLabelRegisteredOffice": "Registered office",
   "supportContactHeading": "Contact the organization",
   "supportContactBody": "For questions about the apps, website, subscriptions, or account support, email us. We aim to respond as soon as possible.",
-  "aboutOperatedBy": "{{brandName}} services and applications are provided by {{legalName}}. For support, visit"
+  "aboutOperatedBy": "{{brandName}} services and applications are provided by {{legalName}}. For support, visit",
+  "premiumRecurringNotice": "Premium előfizetés — {{price}}/hó. A fizetés lemondásig minden hónapban automatikusan megismétlődik.",
+  "premiumRecurringConsent": "Megértettem és elfogadom az ismétlődő havi fizetéseket az előfizetés lemondásáig.",
+  "premiumRecurringRequired": "A fizetés előtt fogadja el az ismétlődő fizetéseket.",
+  "premiumRecurringExpired": "Az ajánlat megváltozott vagy lejárt. Ellenőrizze az árat, és erősítse meg újra."
 }

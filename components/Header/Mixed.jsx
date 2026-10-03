@@ -262,6 +262,8 @@ function Mixed(props) {
   ];
 
   // Special navigation icons from old navbar
+  if (process.env.NEXT_PUBLIC_EBOOKS_ENABLED === 'true') navItems.push({href:'/ebooks',label:'Ebookuri',icon:<span>📖</span>,active:router.pathname.startsWith('/ebooks')});
+
   const specialNavItems = [
     // {
     //   href: "/main-dashboard",

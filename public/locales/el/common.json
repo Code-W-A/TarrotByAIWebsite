@@ -609,5 +609,9 @@
   "supportLabelRegisteredOffice": "Registered office",
   "supportContactHeading": "Contact the organization",
   "supportContactBody": "For questions about the apps, website, subscriptions, or account support, email us. We aim to respond as soon as possible.",
-  "aboutOperatedBy": "{{brandName}} services and applications are provided by {{legalName}}. For support, visit"
+  "aboutOperatedBy": "{{brandName}} services and applications are provided by {{legalName}}. For support, visit",
+  "premiumRecurringNotice": "Συνδρομή Premium — {{price}}/μήνα. Η πληρωμή ανανεώνεται αυτόματα κάθε μήνα μέχρι την ακύρωση.",
+  "premiumRecurringConsent": "Κατανοώ και αποδέχομαι τις επαναλαμβανόμενες μηνιαίες πληρωμές μέχρι να ακυρώσω τη συνδρομή.",
+  "premiumRecurringRequired": "Αποδεχτείτε τις επαναλαμβανόμενες πληρωμές πριν συνεχίσετε στην πληρωμή.",
+  "premiumRecurringExpired": "Η προσφορά άλλαξε ή έληξε. Ελέγξτε την τιμή και επιβεβαιώστε ξανά."
 }

@@ -609,5 +609,9 @@
   "supportLabelRegisteredOffice": "Registered office",
   "supportContactHeading": "Contact the organization",
   "supportContactBody": "For questions about the apps, website, subscriptions, or account support, email us. We aim to respond as soon as possible.",
-  "aboutOperatedBy": "{{brandName}} services and applications are provided by {{legalName}}. For support, visit"
+  "aboutOperatedBy": "{{brandName}} services and applications are provided by {{legalName}}. For support, visit",
+  "premiumRecurringNotice": "Assinatura Premium — {{price}}/mês. O pagamento renova-se automaticamente todos os meses até ao cancelamento.",
+  "premiumRecurringConsent": "Compreendo e aceito os pagamentos mensais recorrentes até cancelar a assinatura.",
+  "premiumRecurringRequired": "Aceite os pagamentos recorrentes antes de continuar para o pagamento.",
+  "premiumRecurringExpired": "A oferta mudou ou expirou. Verifique o preço e confirme novamente."
 }

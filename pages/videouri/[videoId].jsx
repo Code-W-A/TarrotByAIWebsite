@@ -1,3 +1,4 @@
+import SubscriptionRecurringNotice from "../../components/VideoLibrary/SubscriptionRecurringNotice";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
@@ -430,6 +431,8 @@ export default function VideoDetailPage() {
                             <VideoAppOnlyCta />
                           ) : null}
                           {video.lockedReason !== "source_invalid" && !isVideoAppOnlyLocked(video) ? (
+                            <div>
+                              <SubscriptionRecurringNotice />
                             <div className="flex flex-wrap justify-center gap-2">
                               <button
                                 type="button"
@@ -440,6 +443,7 @@ export default function VideoDetailPage() {
                                   ? t("videoLibrarySubscribeCta")
                                   : t("videoLibraryLoginCta")}
                               </button>
+                            </div>
                             </div>
                           ) : null}
                         </div>

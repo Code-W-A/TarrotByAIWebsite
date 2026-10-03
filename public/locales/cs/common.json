@@ -609,5 +609,9 @@
   "supportLabelRegisteredOffice": "Registered office",
   "supportContactHeading": "Contact the organization",
   "supportContactBody": "For questions about the apps, website, subscriptions, or account support, email us. We aim to respond as soon as possible.",
-  "aboutOperatedBy": "{{brandName}} services and applications are provided by {{legalName}}. For support, visit"
+  "aboutOperatedBy": "{{brandName}} services and applications are provided by {{legalName}}. For support, visit",
+  "premiumRecurringNotice": "Předplatné Premium — {{price}}/měsíc. Platba se automaticky opakuje každý měsíc až do zrušení.",
+  "premiumRecurringConsent": "Rozumím opakovaným měsíčním platbám a souhlasím s nimi až do zrušení předplatného.",
+  "premiumRecurringRequired": "Před pokračováním k platbě potvrďte souhlas s opakovanými platbami.",
+  "premiumRecurringExpired": "Nabídka se změnila nebo vypršela. Zkontrolujte cenu a znovu potvrďte."
 }

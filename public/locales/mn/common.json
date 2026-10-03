@@ -609,5 +609,9 @@
   "supportLabelRegisteredOffice": "Registered office",
   "supportContactHeading": "Contact the organization",
   "supportContactBody": "For questions about the apps, website, subscriptions, or account support, email us. We aim to respond as soon as possible.",
-  "aboutOperatedBy": "{{brandName}} services and applications are provided by {{legalName}}. For support, visit"
+  "aboutOperatedBy": "{{brandName}} services and applications are provided by {{legalName}}. For support, visit",
+  "premiumRecurringNotice": "Premium захиалга — {{price}}/сар. Цуцлах хүртэл төлбөр сар бүр автоматаар шинэчлэгдэнэ.",
+  "premiumRecurringConsent": "Захиалгаа цуцлах хүртэл сар бүр давтагдах төлбөрийг ойлгож, зөвшөөрч байна.",
+  "premiumRecurringRequired": "Төлбөр төлөхөөс өмнө давтагдах төлбөрийг зөвшөөрнө үү.",
+  "premiumRecurringExpired": "Санал өөрчлөгдсөн эсвэл хугацаа нь дууссан. Үнийг шалгаад дахин баталгаажуулна уу."
 }

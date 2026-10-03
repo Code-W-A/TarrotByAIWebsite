@@ -617,5 +617,9 @@
   "horoscopeViewVideos": "Vezi videoclipuri {sign}",
   "shareCategory": "Distribuie",
   "shareCategoryMessage": "Descoperă videoclipurile {category} pe Cristina Zurba",
-  "linkCopied": "Link copiat!"
+  "linkCopied": "Link copiat!",
+  "premiumRecurringNotice": "Abonament Premium — {{price}}/lună. Plata se reînnoiește automat lunar până la anulare.",
+  "premiumRecurringConsent": "Înțeleg și accept plata lunară recurentă până la anularea abonamentului.",
+  "premiumRecurringRequired": "Confirmă acceptarea plății recurente înainte de plată.",
+  "premiumRecurringExpired": "Oferta s-a schimbat sau a expirat. Verifică prețul și confirmă din nou."
 }

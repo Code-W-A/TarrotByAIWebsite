@@ -609,5 +609,9 @@
   "supportLabelRegisteredOffice": "Registered office",
   "supportContactHeading": "Contact the organization",
   "supportContactBody": "For questions about the apps, website, subscriptions, or account support, email us. We aim to respond as soon as possible.",
-  "aboutOperatedBy": "{{brandName}} services and applications are provided by {{legalName}}. For support, visit"
+  "aboutOperatedBy": "{{brandName}} services and applications are provided by {{legalName}}. For support, visit",
+  "premiumRecurringNotice": "Premium सदस्यता — {{price}}/माह। रद्द करने तक भुगतान हर महीने अपने आप नवीनीकृत होता है।",
+  "premiumRecurringConsent": "मैं सदस्यता रद्द करने तक आवर्ती मासिक भुगतानों को समझता/समझती हूँ और स्वीकार करता/करती हूँ।",
+  "premiumRecurringRequired": "भुगतान पर आगे बढ़ने से पहले आवर्ती भुगतानों को स्वीकार करें।",
+  "premiumRecurringExpired": "प्रस्ताव बदल गया है या समाप्त हो गया है। कीमत जाँचें और फिर पुष्टि करें।"
 }

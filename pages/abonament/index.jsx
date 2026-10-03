@@ -1,3 +1,4 @@
+import { useSubscriptionConsent } from "../../utils/useSubscriptionConsent";
 import * as React from "react";
 import Head from "next/head";
 import Link from "next/link";
@@ -25,7 +26,6 @@ import {
 } from "../../utils/billingAudit.mjs";
 import { hasPremiumAccess } from "../../lib/premiumAccess";
 import { PREMIUM_ALREADY_ACTIVE_ERROR } from "../../lib/premiumSubscriptionGuard";
-import { usePremiumDisplayPrice } from "../../utils/usePremiumDisplayPrice";
 
 export async function getServerSideProps({ locale }) {
   return {
@@ -135,7 +135,8 @@ export default function AbonamentPage() {
   const { t } = useTranslation("common");
   const router = useRouter();
   const { currentUser, loading, isGuestUser, userData } = useAuth();
-  const { priceText: premiumPriceText } = usePremiumDisplayPrice(router.locale);
+  const recurring = useSubscriptionConsent(router.locale);
+  const premiumPriceText = recurring.quote?.priceText || "—";
   const [checkoutLoading, setCheckoutLoading] = React.useState(false);
   const [portalLoading, setPortalLoading] = React.useState(false);
   const [error, setError] = React.useState("");
@@ -167,6 +168,7 @@ export default function AbonamentPage() {
         body: JSON.stringify({ flow: "default" }),
       });
       const data = await res.json().catch(() => ({}));
+      if (data.error === "SUBSCRIPTION_CONSENT_STALE") { await recurring.refresh(); setError(t("premiumRecurringExpired")); return; }
       if (!res.ok) {
         throw new Error(data?.error || t("premiumManageError"));
       }
@@ -331,6 +333,7 @@ export default function AbonamentPage() {
 
   const startCheckout = async () => {
     setError("");
+    if (!recurring.accepted || !recurring.quote) { setError(t("premiumRecurringRequired")); return; }
     if (!premiumLegalConsentAccepted) {
       setError(t("premiumSubscribeLegalConsentRequired"));
       return;
@@ -395,7 +398,7 @@ export default function AbonamentPage() {
           "Content-Type": "application/json",
           ...headers,
         },
-        body: JSON.stringify({ billingDetails }),
+        body: JSON.stringify({ billingDetails, subscriptionConsent: { accepted: true, version: recurring.quote.version, locale: recurring.quote.locale, quoteId: recurring.quote.quoteId } }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -417,7 +420,7 @@ export default function AbonamentPage() {
         if (Array.isArray(data?.details) && data.details.length) {
           throw new Error(data.details[0].message || data?.error || t("premiumSubscribeError"));
         }
-        throw new Error(data?.error || t("premiumSubscribeError"));
+        throw new Error(data?.message || data?.error || t("premiumSubscribeError"));
       }
       if (data?.url) {
         window.location.href = data.url;
@@ -488,6 +491,7 @@ export default function AbonamentPage() {
             <p className="mt-1 text-lg font-semibold text-indigo-700 lg:text-xl">
               {t("premiumSubscribePriceLine", { price: premiumPriceText })}
             </p>
+            <p className="mt-3 text-sm font-semibold" dir={router.locale === "ar" || router.locale === "he" ? "rtl" : "ltr"}>{recurring.quote?.text}</p>
             <p
               className={`mt-2 max-w-md text-sm leading-relaxed text-slate-600 lg:mt-1.5 lg:max-w-none lg:text-sm lg:leading-snug ${
                 showCompactHero ? "line-clamp-2 lg:line-clamp-3" : ""
@@ -722,7 +726,13 @@ export default function AbonamentPage() {
                         <dd className="mt-0.5 font-medium">{billingValuesIndividual.billingCity || "—"}</dd>
                       </div>
                     </dl>
-                    <div className="border-t border-slate-200 pt-4">
+                    <div className="border-t border-slate-200 pt-4" dir={router.locale === "ar" || router.locale === "he" ? "rtl" : "ltr"}>
+                      <p className="mb-3 font-semibold text-slate-900">{recurring.quote?.text}</p>
+                      {recurring.error ? <button type="button" onClick={recurring.refresh} className="mb-3 text-indigo-700 underline">{t("premiumRecurringExpired")}</button> : null}
+                      <label className="mb-4 flex items-start gap-3 text-sm text-slate-900">
+                        <input type="checkbox" checked={recurring.accepted} onChange={e => recurring.setAccepted(e.target.checked)} disabled={checkoutLoading || !recurring.quote} className="mt-1 h-4 w-4 shrink-0" />
+                        <span>{t("premiumRecurringConsent")}</span>
+                      </label>
                       <div className="flex gap-3">
                         <input
                           id="premium-subscribe-legal-consent"
@@ -790,9 +800,9 @@ export default function AbonamentPage() {
                     <button
                       type="button"
                       onClick={() => startCheckout()}
-                      disabled={checkoutLoading || !premiumLegalConsentAccepted}
+                      disabled={checkoutLoading || !premiumLegalConsentAccepted || !recurring.accepted || !recurring.quote}
                       className={`w-full rounded-xl px-6 py-3 text-sm font-semibold text-white shadow-sm transition sm:ml-auto sm:w-auto sm:min-w-[12rem] ${
-                        checkoutLoading || !premiumLegalConsentAccepted
+                        checkoutLoading || !premiumLegalConsentAccepted || !recurring.accepted || !recurring.quote
                           ? "cursor-not-allowed bg-slate-400"
                           : "bg-slate-900 hover:bg-slate-800"
                       }`}

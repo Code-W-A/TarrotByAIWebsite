@@ -48,3 +48,7 @@ next-env.d.ts
 tarrot-590ee-*.json
 *-credentials.json
 service-account-*.json
+
+/public/ebook-studio/
+/ebook-studio/node_modules/
+/ebook-studio/dist/

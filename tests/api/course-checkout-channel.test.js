@@ -23,6 +23,7 @@ jest.mock("../../lib/requireAuth", () => ({
 
 jest.mock("../../lib/globalSettings", () => ({
   getGlobalSettings: jest.fn(async () => ({ iosCoursesHidden: false })),
+  getVatPercentage: jest.fn(async () => 21),
 }));
 
 jest.mock("../../lib/courseSubscriptionAccess", () => ({

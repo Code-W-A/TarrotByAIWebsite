@@ -1,3 +1,4 @@
+import SubscriptionRecurringNotice from "../../components/VideoLibrary/SubscriptionRecurringNotice";
 import * as React from "react";
 import Head from "next/head";
 import Link from "next/link";
@@ -560,6 +561,7 @@ export default function PremiumZonePage() {
                     description={t("premiumPageErrorBody")}
                   />
                   <div className="flex flex-col gap-3 sm:flex-row">
+                    <SubscriptionRecurringNotice />
                     <Link
                       href="/abonament"
                       className="flex flex-1 items-center justify-center rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-slate-800"
@@ -582,6 +584,7 @@ export default function PremiumZonePage() {
                     description={t("premiumCheckoutCancelledBody")}
                     hint={t("premiumCheckoutCancelledHint")}
                   />
+                  <SubscriptionRecurringNotice />
                   <Link
                     href="/abonament"
                     className="flex w-full items-center justify-center rounded-xl bg-slate-900 px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-slate-800"
@@ -602,6 +605,7 @@ export default function PremiumZonePage() {
               ) : uiVariant === "subscribe" ? (
                 <div className="space-y-5">
                   <SubscribeGatePanel title={t("premiumLockedTitle")} description={t("premiumLockedDescription")} />
+                  <SubscriptionRecurringNotice />
                   <Link
                     href="/abonament"
                     className="flex w-full items-center justify-center rounded-xl bg-violet-700 px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-600"

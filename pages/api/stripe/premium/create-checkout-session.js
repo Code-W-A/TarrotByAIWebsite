@@ -1,3 +1,4 @@
+import { acceptSubscriptionConsent, linkSubscriptionConsent, consentErrorResponse } from "../../../../lib/subscriptionConsent";
 import Stripe from "stripe";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "../../../../lib/firebaseAdmin";
@@ -132,6 +133,10 @@ export default async function handler(req, res) {
 
   const uid = authUser.uid;
   const db = getAdminDb();
+  let subscriptionAcceptance;
+  try {
+    subscriptionAcceptance = await acceptSubscriptionConsent({ db, stripe, uid, channel: "web", consent: req.body?.subscriptionConsent });
+  } catch (error) { return consentErrorResponse(res, error, req.body?.subscriptionConsent?.locale); }
 
   const guard = await assertCanStartPremiumSubscription({
     db,
@@ -163,6 +168,7 @@ export default async function handler(req, res) {
   }
 
   const metadata = {
+    subscriptionConsentId: subscriptionAcceptance.id,
     uid,
     flow: PREMIUM_FLOW_METADATA,
     invoiceSendEmail: String(billingDetails?.invoicePreferences?.sendEmail !== false),
@@ -183,6 +189,7 @@ export default async function handler(req, res) {
   const fixedVatTaxRateId = await getFixedVatTaxRateId(stripe);
   const sessionParams = {
     mode: "subscription",
+    custom_text: { submit: { message: subscriptionAcceptance.quote.text } },
     payment_method_types: ["card"],
     billing_address_collection: "required",
     phone_number_collection: { enabled: true },
@@ -211,12 +218,14 @@ export default async function handler(req, res) {
 
   try {
     const session = await stripe.checkout.sessions.create(sessionParams);
+    await linkSubscriptionConsent(db, subscriptionAcceptance.id, { stripeCheckoutSessionId: session.id, paymentStatus: "pending" });
     if (!session?.url) {
       return res.status(500).json({ error: "Checkout session missing URL" });
     }
 
     try {
       const checkoutSessionPayload = {
+        subscriptionConsentId: subscriptionAcceptance.id,
         uid,
         stripeCheckoutSessionId: session.id,
         paymentStatus: "pending",

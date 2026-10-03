@@ -1,0 +1,16 @@
+{
+  "name": "cristina-ebook-studio",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "sanity build ../public/ebook-studio --yes",
+    "dev": "sanity dev"
+  },
+  "dependencies": {
+    "sanity": "^5.0.0",
+    "react": "^19.2.2",
+    "react-dom": "^19.2.2",
+    "styled-components": "^6.1.15"
+  }
+}

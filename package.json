@@ -6,7 +6,7 @@
     "dev": "next dev",
     "stripe:listen-premium": "stripe listen --forward-to localhost:3000/api/stripe/premium/webhook --events checkout.session.completed,customer.subscription.created,customer.subscription.updated,customer.subscription.deleted,invoice.payment_succeeded,invoice.payment_failed",
     "dev:debug": "ENABLE_I18N_LOGS=true next dev",
-    "build": "next build",
+    "build": "npm run build:ebook-studio && next build",
     "build:debug": "ENABLE_I18N_LOGS=true next build",
     "test": "npm run test:unit && npm run test:smoke",
     "test:unit": "jest --testPathIgnorePatterns=smoke",
@@ -22,7 +22,8 @@
     "audit:premium-subscription-tax": "node scripts/migrate-premium-subscriptions-tax.cjs",
     "migrate:premium-fixed-vat": "node scripts/migrate-premium-fixed-vat.cjs",
     "repair:course-vat-entitlements": "node scripts/repair-course-vat-entitlements.cjs",
-    "stripe:setup-fixed-vat": "node scripts/setup-fixed-vat-tax-rate.cjs"
+    "stripe:setup-fixed-vat": "node scripts/setup-fixed-vat-tax-rate.cjs",
+    "build:ebook-studio": "node scripts/build-ebook-studio.cjs"
   },
   "dependencies": {
     "@babel/core": "^7.16.5",
@@ -56,6 +57,7 @@
     "@radix-ui/react-tabs": "^1.1.13",
     "@react-google-maps/api": "^2.19.2",
     "@restart/hooks": "^0.4.16",
+    "@sanity/webhook": "^4.0.4",
     "@sentry/nextjs": "^10.59.0",
     "@stripe/react-stripe-js": "^2.8.0",
     "@stripe/stripe-js": "^4.5.0",

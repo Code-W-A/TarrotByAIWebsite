@@ -609,5 +609,9 @@
   "supportLabelRegisteredOffice": "Registered office",
   "supportContactHeading": "Contact the organization",
   "supportContactBody": "For questions about the apps, website, subscriptions, or account support, email us. We aim to respond as soon as possible.",
-  "aboutOperatedBy": "{{brandName}} services and applications are provided by {{legalName}}. For support, visit"
+  "aboutOperatedBy": "{{brandName}} services and applications are provided by {{legalName}}. For support, visit",
+  "premiumRecurringNotice": "Premium 구독 — 월 {{price}}. 취소할 때까지 매월 자동으로 결제됩니다.",
+  "premiumRecurringConsent": "구독을 취소할 때까지 매월 반복 결제되는 것을 이해하고 동의합니다.",
+  "premiumRecurringRequired": "결제를 진행하기 전에 반복 결제에 동의해 주세요.",
+  "premiumRecurringExpired": "혜택이 변경되었거나 만료되었습니다. 가격을 확인하고 다시 동의해 주세요."
 }

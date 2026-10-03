@@ -109,6 +109,7 @@ const dashboardPrefetchScreens = [
   "citire-personalizata-variantecarti",
   "citate-motivationale",
   "courses",
+  "ebooks",
   "videos",
   "culori-norocoase",
   "numere-norocoase",
@@ -578,6 +579,9 @@ export default function CustomDrawer(props) {
                   sx={{ color: "white" }}
                 />
               </ListItemButton>
+              {/* Temporar ascuns până la lansarea funcționalității ebookuri.
+              <ListItemButton onClick={() => handleSelectedItem({screen:"ebooks",text:"Ebookuri"})}><ListItemIcon><LibraryBooksIcon /></ListItemIcon><ListItemText primary="Ebookuri" sx={{color:"white"}} /></ListItemButton>
+              */}
               <ListItemButton
                 onClick={() =>
                   handleSelectedItem({

@@ -609,5 +609,9 @@
   "supportLabelRegisteredOffice": "Registered office",
   "supportContactHeading": "Contact the organization",
   "supportContactBody": "For questions about the apps, website, subscriptions, or account support, email us. We aim to respond as soon as possible.",
-  "aboutOperatedBy": "{{brandName}} services and applications are provided by {{legalName}}. For support, visit"
+  "aboutOperatedBy": "{{brandName}} services and applications are provided by {{legalName}}. For support, visit",
+  "premiumRecurringNotice": "Premium サブスクリプション — 月額 {{price}}。キャンセルするまで毎月自動的に請求されます。",
+  "premiumRecurringConsent": "サブスクリプションをキャンセルするまで毎月継続して請求されることを理解し、同意します。",
+  "premiumRecurringRequired": "支払いに進む前に、継続的な請求に同意してください。",
+  "premiumRecurringExpired": "オファーが変更されたか、有効期限が切れました。価格を確認し、再度同意してください。"
 }

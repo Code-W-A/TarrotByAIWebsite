@@ -609,5 +609,9 @@
   "supportLabelRegisteredOffice": "Registered office",
   "supportContactHeading": "Contact the organization",
   "supportContactBody": "For questions about the apps, website, subscriptions, or account support, email us. We aim to respond as soon as possible.",
-  "aboutOperatedBy": "{{brandName}} services and applications are provided by {{legalName}}. For support, visit"
+  "aboutOperatedBy": "{{brandName}} services and applications are provided by {{legalName}}. For support, visit",
+  "premiumRecurringNotice": "Premium 订阅 — 每月 {{price}}。付款每月自动续订，直至取消。",
+  "premiumRecurringConsent": "我理解并同意每月定期付款，直至取消订阅。",
+  "premiumRecurringRequired": "继续付款前，请同意定期付款。",
+  "premiumRecurringExpired": "优惠已更改或已过期。请检查价格并重新确认。"
 }

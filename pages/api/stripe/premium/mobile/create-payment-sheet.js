@@ -1,3 +1,4 @@
+import { acceptSubscriptionConsent, linkSubscriptionConsent, consentErrorResponse } from "../../../../../lib/subscriptionConsent";
 import Stripe from "stripe";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "../../../../../lib/firebaseAdmin";
@@ -184,6 +185,10 @@ export default async function handler(req, res) {
 
   const uid = authUser.uid;
   const db = getAdminDb();
+  let subscriptionAcceptance;
+  try {
+    subscriptionAcceptance = await acceptSubscriptionConsent({ db, stripe, uid, channel: "mobile", consent: req.body?.subscriptionConsent });
+  } catch (error) { return consentErrorResponse(res, error, req.body?.subscriptionConsent?.locale); }
   const baseUrl = resolvePremiumPublicBaseUrl(req);
 
   try {
@@ -238,6 +243,7 @@ export default async function handler(req, res) {
     }
 
     const metadata = {
+      subscriptionConsentId: subscriptionAcceptance.id,
       uid,
       flow: PREMIUM_FLOW_METADATA,
       platform: requestedPlatform || "expo",
@@ -332,6 +338,8 @@ export default async function handler(req, res) {
         .status(500)
         .json({ error: "Could not start subscription payment" });
     }
+
+    await linkSubscriptionConsent(db, subscriptionAcceptance.id, { stripeSubscriptionId: subscription.id, stripePaymentIntentId: paymentIntentId || null, paymentStatus: "pending" });
 
     console.log("[premium.mobile.payment_sheet] Subscription created (incomplete)", {
       subscriptionId: subscription.id,

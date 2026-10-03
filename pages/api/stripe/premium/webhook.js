@@ -1,3 +1,4 @@
+import { linkSubscriptionConsent } from "../../../../lib/subscriptionConsent";
 import Stripe from "stripe";
 import { buffer } from "micro";
 import { FieldValue } from "firebase-admin/firestore";
@@ -143,6 +144,11 @@ export default async function handler(req, res) {
 
   try {
     switch (event.type) {
+      case "checkout.session.expired": {
+        const session = event.data.object;
+        if (session.metadata?.flow === PREMIUM_FLOW_METADATA) await linkSubscriptionConsent(db, session.metadata?.subscriptionConsentId, { stripeCheckoutSessionId: session.id, paymentStatus: "expired" }, event);
+        break;
+      }
       case "checkout.session.completed": {
         const session = event.data.object;
         if (session.mode !== "subscription") break;
@@ -164,12 +170,14 @@ export default async function handler(req, res) {
           eventTimestampMs: event.created * 1000,
         });
         await persistPremiumBillingFromCheckoutSession(db, session);
+        await linkSubscriptionConsent(db, session.metadata?.subscriptionConsentId, { stripeCheckoutSessionId: session.id, stripeSubscriptionId: subId, paymentStatus: session.payment_status || "pending" }, event);
         break;
       }
       case "customer.subscription.created":
       case "customer.subscription.updated":
       case "customer.subscription.deleted": {
         const sub = event.data.object;
+        await linkSubscriptionConsent(db, sub.metadata?.subscriptionConsentId, { stripeSubscriptionId: sub.id, subscriptionStatus: sub.status }, event);
         try {
           await syncPremiumSubscriptionById(stripe, sub.id, {
             eventTimestampMs: event.created * 1000,
@@ -193,6 +201,8 @@ export default async function handler(req, res) {
         await syncPremiumSubscriptionById(stripe, subId, {
           eventTimestampMs: event.created * 1000,
         });
+        const consentId = invoice.subscription_details?.metadata?.subscriptionConsentId || invoice.parent?.subscription_details?.metadata?.subscriptionConsentId;
+        await linkSubscriptionConsent(db, consentId, { stripeSubscriptionId: subId, stripeInvoiceId: invoice.id, paymentStatus: event.type === "invoice.payment_succeeded" ? "paid" : "failed" }, event);
         if (event.type === "invoice.payment_succeeded") {
           const oblioResult = await emitPremiumSubscriptionOblioInvoice({
             db,

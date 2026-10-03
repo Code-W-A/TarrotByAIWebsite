@@ -609,5 +609,9 @@
   "supportLabelRegisteredOffice": "Registered office",
   "supportContactHeading": "Contact the organization",
   "supportContactBody": "For questions about the apps, website, subscriptions, or account support, email us. We aim to respond as soon as possible.",
-  "aboutOperatedBy": "{{brandName}} services and applications are provided by {{legalName}}. For support, visit"
+  "aboutOperatedBy": "{{brandName}} services and applications are provided by {{legalName}}. For support, visit",
+  "premiumRecurringNotice": "Abonim Premium — {{price}}/muaj. Pagesa rinovohet automatikisht çdo muaj deri në anulim.",
+  "premiumRecurringConsent": "E kuptoj dhe pranoj pagesat mujore të përsëritura deri në anulimin e abonimit.",
+  "premiumRecurringRequired": "Pranoni pagesat e përsëritura përpara se të vazhdoni me pagesën.",
+  "premiumRecurringExpired": "Oferta ka ndryshuar ose ka skaduar. Kontrolloni çmimin dhe konfirmoni sërish."
 }
