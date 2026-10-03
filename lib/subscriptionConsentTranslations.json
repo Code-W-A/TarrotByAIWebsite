@@ -1,0 +1,191 @@
+{
+  "ro": {
+    "premiumRecurringNotice": "Abonament Premium — {price}/lună. Plata se reînnoiește automat lunar până la anulare.",
+    "premiumRecurringConsent": "Înțeleg și accept plata lunară recurentă până la anularea abonamentului.",
+    "premiumRecurringRequired": "Confirmă acceptarea plății recurente înainte de plată.",
+    "premiumRecurringExpired": "Oferta s-a schimbat sau a expirat. Verifică prețul și confirmă din nou.",
+    "premiumRecurringUnavailable": "Nu am putut porni plata. Încearcă din nou."
+  },
+  "en": {
+    "premiumRecurringNotice": "Premium subscription — {price}/month. Payment renews automatically every month until canceled.",
+    "premiumRecurringConsent": "I understand and accept recurring monthly payments until I cancel the subscription.",
+    "premiumRecurringRequired": "Accept recurring payments before continuing to payment.",
+    "premiumRecurringExpired": "The offer has changed or expired. Check the price and confirm again.",
+    "premiumRecurringUnavailable": "We could not start checkout. Please try again."
+  },
+  "ar": {
+    "premiumRecurringNotice": "اشتراك Premium — {price}/شهر. تتجدد الدفعة تلقائيًا كل شهر حتى الإلغاء.",
+    "premiumRecurringConsent": "أفهم وأوافق على الدفعات الشهرية المتكررة حتى إلغاء الاشتراك.",
+    "premiumRecurringRequired": "وافق على الدفعات المتكررة قبل المتابعة إلى الدفع.",
+    "premiumRecurringExpired": "تغير العرض أو انتهت صلاحيته. تحقق من السعر وأكد مرة أخرى.",
+    "premiumRecurringUnavailable": "لم نتمكن من بدء عملية الدفع. يرجى المحاولة مرة أخرى."
+  },
+  "bg": {
+    "premiumRecurringNotice": "Абонамент Premium — {price}/месец. Плащането се подновява автоматично всеки месец до отказ.",
+    "premiumRecurringConsent": "Разбирам и приемам повтарящите се месечни плащания до прекратяване на абонамента.",
+    "premiumRecurringRequired": "Приемете повтарящите се плащания, преди да продължите към плащането.",
+    "premiumRecurringExpired": "Офертата е променена или е изтекла. Проверете цената и потвърдете отново.",
+    "premiumRecurringUnavailable": "Не успяхме да започнем плащането. Моля, опитайте отново."
+  },
+  "bs": {
+    "premiumRecurringNotice": "Premium pretplata — {price}/mjesečno. Plaćanje se automatski obnavlja svakog mjeseca do otkazivanja.",
+    "premiumRecurringConsent": "Razumijem i prihvatam ponavljajuća mjesečna plaćanja do otkazivanja pretplate.",
+    "premiumRecurringRequired": "Prihvatite ponavljajuća plaćanja prije nastavka na plaćanje.",
+    "premiumRecurringExpired": "Ponuda se promijenila ili je istekla. Provjerite cijenu i ponovo potvrdite.",
+    "premiumRecurringUnavailable": "Nismo mogli započeti plaćanje. Pokušajte ponovo."
+  },
+  "cs": {
+    "premiumRecurringNotice": "Předplatné Premium — {price}/měsíc. Platba se automaticky opakuje každý měsíc až do zrušení.",
+    "premiumRecurringConsent": "Rozumím opakovaným měsíčním platbám a souhlasím s nimi až do zrušení předplatného.",
+    "premiumRecurringRequired": "Před pokračováním k platbě potvrďte souhlas s opakovanými platbami.",
+    "premiumRecurringExpired": "Nabídka se změnila nebo vypršela. Zkontrolujte cenu a znovu potvrďte.",
+    "premiumRecurringUnavailable": "Nepodařilo se nám spustit pokladnu. Zkuste to prosím znovu."
+  },
+  "de": {
+    "premiumRecurringNotice": "Premium-Abonnement — {price}/Monat. Die Zahlung wird bis zur Kündigung jeden Monat automatisch wiederholt.",
+    "premiumRecurringConsent": "Ich verstehe und akzeptiere wiederkehrende monatliche Zahlungen bis zur Kündigung des Abonnements.",
+    "premiumRecurringRequired": "Akzeptieren Sie wiederkehrende Zahlungen, bevor Sie zur Zahlung fortfahren.",
+    "premiumRecurringExpired": "Das Angebot hat sich geändert oder ist abgelaufen. Prüfen Sie den Preis und bestätigen Sie erneut.",
+    "premiumRecurringUnavailable": "Der Bestellvorgang konnte nicht gestartet werden. Bitte versuchen Sie es erneut."
+  },
+  "el": {
+    "premiumRecurringNotice": "Συνδρομή Premium — {price}/μήνα. Η πληρωμή ανανεώνεται αυτόματα κάθε μήνα μέχρι την ακύρωση.",
+    "premiumRecurringConsent": "Κατανοώ και αποδέχομαι τις επαναλαμβανόμενες μηνιαίες πληρωμές μέχρι να ακυρώσω τη συνδρομή.",
+    "premiumRecurringRequired": "Αποδεχτείτε τις επαναλαμβανόμενες πληρωμές πριν συνεχίσετε στην πληρωμή.",
+    "premiumRecurringExpired": "Η προσφορά άλλαξε ή έληξε. Ελέγξτε την τιμή και επιβεβαιώστε ξανά.",
+    "premiumRecurringUnavailable": "Δεν ήταν δυνατή η έναρξη της ολοκλήρωσης αγοράς. Δοκιμάστε ξανά."
+  },
+  "es": {
+    "premiumRecurringNotice": "Suscripción Premium — {price}/mes. El pago se renueva automáticamente cada mes hasta la cancelación.",
+    "premiumRecurringConsent": "Entiendo y acepto los pagos mensuales recurrentes hasta que cancele la suscripción.",
+    "premiumRecurringRequired": "Acepta los pagos recurrentes antes de continuar al pago.",
+    "premiumRecurringExpired": "La oferta ha cambiado o ha caducado. Revisa el precio y confirma de nuevo.",
+    "premiumRecurringUnavailable": "No se pudo iniciar el proceso de pago. Inténtalo de nuevo."
+  },
+  "fr": {
+    "premiumRecurringNotice": "Abonnement Premium — {price}/mois. Le paiement se renouvelle automatiquement chaque mois jusqu’à résiliation.",
+    "premiumRecurringConsent": "Je comprends et accepte les paiements mensuels récurrents jusqu’à la résiliation de mon abonnement.",
+    "premiumRecurringRequired": "Acceptez les paiements récurrents avant de passer au paiement.",
+    "premiumRecurringExpired": "L’offre a changé ou a expiré. Vérifiez le prix et confirmez à nouveau.",
+    "premiumRecurringUnavailable": "Impossible de procéder au paiement. Veuillez réessayer."
+  },
+  "he": {
+    "premiumRecurringNotice": "מנוי Premium — {price}/חודש. התשלום מתחדש אוטומטית מדי חודש עד לביטול.",
+    "premiumRecurringConsent": "אני מבין/ה ומסכים/ה לתשלומים חודשיים חוזרים עד לביטול המנוי.",
+    "premiumRecurringRequired": "יש להסכים לתשלומים חוזרים לפני המעבר לתשלום.",
+    "premiumRecurringExpired": "ההצעה השתנתה או פג תוקפה. יש לבדוק את המחיר ולאשר שוב.",
+    "premiumRecurringUnavailable": "לא הצלחנו להתחיל בתשלום. אנא נסה שוב."
+  },
+  "hi": {
+    "premiumRecurringNotice": "Premium सदस्यता — {price}/माह। रद्द करने तक भुगतान हर महीने अपने आप नवीनीकृत होता है।",
+    "premiumRecurringConsent": "मैं सदस्यता रद्द करने तक आवर्ती मासिक भुगतानों को समझता/समझती हूँ और स्वीकार करता/करती हूँ।",
+    "premiumRecurringRequired": "भुगतान पर आगे बढ़ने से पहले आवर्ती भुगतानों को स्वीकार करें।",
+    "premiumRecurringExpired": "प्रस्ताव बदल गया है या समाप्त हो गया है। कीमत जाँचें और फिर पुष्टि करें।",
+    "premiumRecurringUnavailable": "चेकआउट शुरू नहीं हो सका। कृपया पुनः प्रयास करें।"
+  },
+  "hr": {
+    "premiumRecurringNotice": "Premium pretplata — {price}/mjesečno. Plaćanje se automatski obnavlja svakog mjeseca do otkazivanja.",
+    "premiumRecurringConsent": "Razumijem i prihvaćam ponavljajuća mjesečna plaćanja do otkazivanja pretplate.",
+    "premiumRecurringRequired": "Prihvatite ponavljajuća plaćanja prije nastavka na plaćanje.",
+    "premiumRecurringExpired": "Ponuda se promijenila ili je istekla. Provjerite cijenu i ponovno potvrdite.",
+    "premiumRecurringUnavailable": "Nismo mogli započeti s plaćanjem. Pokušajte ponovno."
+  },
+  "hu": {
+    "premiumRecurringNotice": "Premium előfizetés — {price}/hó. A fizetés lemondásig minden hónapban automatikusan megismétlődik.",
+    "premiumRecurringConsent": "Megértettem és elfogadom az ismétlődő havi fizetéseket az előfizetés lemondásáig.",
+    "premiumRecurringRequired": "A fizetés előtt fogadja el az ismétlődő fizetéseket.",
+    "premiumRecurringExpired": "Az ajánlat megváltozott vagy lejárt. Ellenőrizze az árat, és erősítse meg újra.",
+    "premiumRecurringUnavailable": "Nem tudtuk elindítani a fizetést. Kérjük, próbálja újra."
+  },
+  "id": {
+    "premiumRecurringNotice": "Langganan Premium — {price}/bulan. Pembayaran diperpanjang otomatis setiap bulan hingga dibatalkan.",
+    "premiumRecurringConsent": "Saya memahami dan menyetujui pembayaran bulanan berulang hingga saya membatalkan langganan.",
+    "premiumRecurringRequired": "Setujui pembayaran berulang sebelum melanjutkan ke pembayaran.",
+    "premiumRecurringExpired": "Penawaran berubah atau kedaluwarsa. Periksa harga dan konfirmasikan kembali.",
+    "premiumRecurringUnavailable": "Kami tidak dapat memulai pembayaran. Silakan coba lagi.\n"
+  },
+  "it": {
+    "premiumRecurringNotice": "Abbonamento Premium — {price}/mese. Il pagamento si rinnova automaticamente ogni mese fino alla disdetta.",
+    "premiumRecurringConsent": "Comprendo e accetto i pagamenti mensili ricorrenti fino alla disdetta dell’abbonamento.",
+    "premiumRecurringRequired": "Accetta i pagamenti ricorrenti prima di procedere al pagamento.",
+    "premiumRecurringExpired": "L’offerta è cambiata o è scaduta. Controlla il prezzo e conferma di nuovo.",
+    "premiumRecurringUnavailable": "Non è stato possibile avviare la procedura di pagamento. Riprova."
+  },
+  "ja": {
+    "premiumRecurringNotice": "Premium サブスクリプション — 月額 {price}。キャンセルするまで毎月自動的に請求されます。",
+    "premiumRecurringConsent": "サブスクリプションをキャンセルするまで毎月継続して請求されることを理解し、同意します。",
+    "premiumRecurringRequired": "支払いに進む前に、継続的な請求に同意してください。",
+    "premiumRecurringExpired": "オファーが変更されたか、有効期限が切れました。価格を確認し、再度同意してください。",
+    "premiumRecurringUnavailable": "チェックアウトを開始できませんでした。もう一度お試しください。"
+  },
+  "ko": {
+    "premiumRecurringNotice": "Premium 구독 — 월 {price}. 취소할 때까지 매월 자동으로 결제됩니다.",
+    "premiumRecurringConsent": "구독을 취소할 때까지 매월 반복 결제되는 것을 이해하고 동의합니다.",
+    "premiumRecurringRequired": "결제를 진행하기 전에 반복 결제에 동의해 주세요.",
+    "premiumRecurringExpired": "혜택이 변경되었거나 만료되었습니다. 가격을 확인하고 다시 동의해 주세요.",
+    "premiumRecurringUnavailable": "결제를 시작할 수 없습니다. 다시 시도해 주세요."
+  },
+  "mn": {
+    "premiumRecurringNotice": "Premium захиалга — {price}/сар. Цуцлах хүртэл төлбөр сар бүр автоматаар шинэчлэгдэнэ.",
+    "premiumRecurringConsent": "Захиалгаа цуцлах хүртэл сар бүр давтагдах төлбөрийг ойлгож, зөвшөөрч байна.",
+    "premiumRecurringRequired": "Төлбөр төлөхөөс өмнө давтагдах төлбөрийг зөвшөөрнө үү.",
+    "premiumRecurringExpired": "Санал өөрчлөгдсөн эсвэл хугацаа нь дууссан. Үнийг шалгаад дахин баталгаажуулна уу.",
+    "premiumRecurringUnavailable": "\nБид төлбөрөө эхлүүлж чадсангүй. Дахин оролдоно уу."
+  },
+  "pl": {
+    "premiumRecurringNotice": "Subskrypcja Premium — {price}/miesiąc. Płatność odnawia się automatycznie co miesiąc do anulowania.",
+    "premiumRecurringConsent": "Rozumiem i akceptuję cykliczne płatności miesięczne do anulowania subskrypcji.",
+    "premiumRecurringRequired": "Zaakceptuj cykliczne płatności przed przejściem do płatności.",
+    "premiumRecurringExpired": "Oferta zmieniła się lub wygasła. Sprawdź cenę i potwierdź ponownie.",
+    "premiumRecurringUnavailable": "Nie udało się rozpocząć realizacji zamówienia. Spróbuj ponownie."
+  },
+  "pt": {
+    "premiumRecurringNotice": "Assinatura Premium — {price}/mês. O pagamento renova-se automaticamente todos os meses até ao cancelamento.",
+    "premiumRecurringConsent": "Compreendo e aceito os pagamentos mensais recorrentes até cancelar a assinatura.",
+    "premiumRecurringRequired": "Aceite os pagamentos recorrentes antes de continuar para o pagamento.",
+    "premiumRecurringExpired": "A oferta mudou ou expirou. Verifique o preço e confirme novamente.",
+    "premiumRecurringUnavailable": "Não foi possível iniciar o checkout. Tente novamente."
+  },
+  "ru": {
+    "premiumRecurringNotice": "Подписка Premium — {price}/месяц. Оплата автоматически повторяется каждый месяц до отмены.",
+    "premiumRecurringConsent": "Я понимаю и принимаю регулярные ежемесячные платежи до отмены подписки.",
+    "premiumRecurringRequired": "Подтвердите согласие на регулярные платежи перед переходом к оплате.",
+    "premiumRecurringExpired": "Предложение изменилось или истекло. Проверьте цену и подтвердите снова.",
+    "premiumRecurringUnavailable": "Не удалось начать оформление заказа. Пожалуйста, попробуйте еще раз.\n"
+  },
+  "sk": {
+    "premiumRecurringNotice": "Predplatné Premium — {price}/mesiac. Platba sa automaticky opakuje každý mesiac až do zrušenia.",
+    "premiumRecurringConsent": "Rozumiem opakovaným mesačným platbám a súhlasím s nimi až do zrušenia predplatného.",
+    "premiumRecurringRequired": "Pred pokračovaním k platbe potvrďte súhlas s opakovanými platbami.",
+    "premiumRecurringExpired": "Ponuka sa zmenila alebo vypršala. Skontrolujte cenu a znova potvrďte.",
+    "premiumRecurringUnavailable": "Nepodarilo sa nám spustiť platbu. Skúste to znova."
+  },
+  "sq": {
+    "premiumRecurringNotice": "Abonim Premium — {price}/muaj. Pagesa rinovohet automatikisht çdo muaj deri në anulim.",
+    "premiumRecurringConsent": "E kuptoj dhe pranoj pagesat mujore të përsëritura deri në anulimin e abonimit.",
+    "premiumRecurringRequired": "Pranoni pagesat e përsëritura përpara se të vazhdoni me pagesën.",
+    "premiumRecurringExpired": "Oferta ka ndryshuar ose ka skaduar. Kontrolloni çmimin dhe konfirmoni sërish.",
+    "premiumRecurringUnavailable": "Nuk mundëm ta fillonim pagesën. Ju lutemi provoni përsëri."
+  },
+  "sr": {
+    "premiumRecurringNotice": "Premium претплата — {price}/месечно. Плаћање се аутоматски обнавља сваког месеца до отказивања.",
+    "premiumRecurringConsent": "Разумем и прихватам понављајућа месечна плаћања до отказивања претплате.",
+    "premiumRecurringRequired": "Прихватите понављајућа плаћања пре наставка на плаћање.",
+    "premiumRecurringExpired": "Понуда се променила или је истекла. Проверите цену и поново потврдите.",
+    "premiumRecurringUnavailable": "Нисмо могли да започнемо плаћање. Молимо покушајте поново."
+  },
+  "tr": {
+    "premiumRecurringNotice": "Premium abonelik — {price}/ay. Ödeme, iptal edilene kadar her ay otomatik olarak yenilenir.",
+    "premiumRecurringConsent": "Aboneliği iptal edene kadar tekrarlanan aylık ödemeleri anlıyor ve kabul ediyorum.",
+    "premiumRecurringRequired": "Ödemeye geçmeden önce tekrarlanan ödemeleri kabul edin.",
+    "premiumRecurringExpired": "Teklif değişti veya süresi doldu. Fiyatı kontrol edip tekrar onaylayın.",
+    "premiumRecurringUnavailable": "Ödeme işlemine başlayamadık. Lütfen tekrar deneyin.\n"
+  },
+  "zh": {
+    "premiumRecurringNotice": "Premium 订阅 — 每月 {price}。付款每月自动续订，直至取消。",
+    "premiumRecurringConsent": "我理解并同意每月定期付款，直至取消订阅。",
+    "premiumRecurringRequired": "继续付款前，请同意定期付款。",
+    "premiumRecurringExpired": "优惠已更改或已过期。请检查价格并重新确认。",
+    "premiumRecurringUnavailable": "\n結帳失敗，請重試。\n"
+  }
+}
