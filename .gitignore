@@ -43,6 +43,7 @@ next-env.d.ts
 # Re-include essential project JSON files
 !package.json
 !package-lock.json
+!tsconfig.json
 !public/locales/**/*.json
 
 tarrot-590ee-*.json
