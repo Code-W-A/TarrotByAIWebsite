@@ -1,3 +1,7 @@
+jest.mock("../../lib/ebooks/promo", () => ({
+  ...jest.requireActual("../../lib/ebooks/promo"),
+  redeemPromo: jest.fn(),
+}));
 jest.mock("../../lib/firebaseAdmin", () => ({
   getAdminDb: jest.fn(() => ({})),
 }));
@@ -122,4 +126,60 @@ it("requires a signed Sanity webhook before updating registry", async () => {
   delete process.env.SANITY_EBOOK_WEBHOOK_SECRET;
   const r = await request("sanity-webhook", "POST", {});
   expect(r.code).toBe(401);
+});
+
+import { redeemPromo } from "../../lib/ebooks/promo";
+it("redeems only authenticated UID after validating a published book", async () => {
+  metadata.mockResolvedValue({ safe: { id: "book" } });
+  redeemPromo.mockResolvedValue({ owned: true });
+  const r = await request("book/redeem", "POST", {
+    code: "example",
+    uid: "bob",
+  });
+  expect(r.code).toBe(200);
+  expect(metadata).toHaveBeenCalledWith("book", "es", false);
+  expect(redeemPromo).toHaveBeenCalledWith(
+    {},
+    { uid: "alice" },
+    "book",
+    "example",
+  );
+  expect(r.payload).toEqual({ owned: true });
+});
+it.each([
+  "book/redeem",
+  "book/checkout",
+  "book/chapters/c1",
+  "book/progress",
+  "purchased",
+])("rejects anonymous account at %s", async (path) => {
+  requireAuth.mockResolvedValue({
+    uid: "anon",
+    firebase: { sign_in_provider: "anonymous" },
+  });
+  const r = await request(path, /redeem|checkout/.test(path) ? "POST" : "GET", {
+    code: "example",
+  });
+  expect(r.code).toBe(401);
+  expect(redeemPromo).not.toHaveBeenCalled();
+  expect(readChapter).not.toHaveBeenCalled();
+});
+it("does not grant promo for missing, draft or archived book", async () => {
+  metadata.mockRejectedValue(
+    Object.assign(new Error("Not found"), { statusCode: 404 }),
+  );
+  const r = await request("book/redeem", "POST", { code: "example" });
+  expect(r.code).toBe(404);
+  expect(redeemPromo).not.toHaveBeenCalled();
+});
+it("config exposes only promo availability", async () => {
+  process.env.EBOOK_PROMO_ENABLED = "true";
+  process.env.EBOOK_PROMO_CODE_HASH = "a".repeat(64);
+  const r = await request("config");
+  expect(r.payload.promoEnabled).toBe(true);
+  expect(JSON.stringify(r.payload)).not.toContain("a".repeat(64));
+  process.env.EBOOK_PROMO_ENABLED = "false";
+  expect((await request("config")).payload.promoEnabled).toBe(false);
+  delete process.env.EBOOK_PROMO_ENABLED;
+  delete process.env.EBOOK_PROMO_CODE_HASH;
 });

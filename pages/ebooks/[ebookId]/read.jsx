@@ -48,7 +48,7 @@ export default function EbookReader() {
     setBookStatus("loading"); setChapterStatus("loading"); setMessage("");
     setProgressWarning(false); setTocOpen(false);
     if (!ebookId || (!isPreview && authLoading)) return;
-    if (!isPreview && !currentUser) { setBookStatus("login"); return; }
+    if (!isPreview && (!currentUser || currentUser.isAnonymous)) { setBookStatus("login"); return; }
     (async () => {
       try {
         const b = await request(`${isPreview ? "/preview" : ""}/${ebookId}?locale=${encodeURIComponent(locale)}`, isPreview ? null : currentUser);
@@ -172,7 +172,7 @@ export default function EbookReader() {
               if (!restoring.current) { const el = e.currentTarget; position.current = el.scrollTop / Math.max(1, el.scrollHeight - el.clientHeight); }
             }}>
               {bookStatus === "loading" || (ready && book.chapters.length > 0 && chapterStatus === "loading") ? <div className={styles.skeleton} role="status" aria-label={ui("Se încarcă ebookul", "Loading ebook")}><div className={styles.skeletonTitle} />{Array.from({ length: 9 }, (_, n) => <div key={n} className={styles.skeletonLine} />)}</div>
-              : bookStatus === "login" ? <div className={styles.empty}><h2>{ui("Autentifică-te pentru a citi", "Sign in to read")}</h2><p>{ui("Cartea este disponibilă în contul cu care ai cumpărat-o.", "Use the account you purchased this book with.")}</p><Link href="/ebooks/mine" className={styles.primary}>{ui("Cărțile mele", "My books")}</Link></div>
+              : bookStatus === "login" ? <div className={styles.empty}><h2>{ui("Autentifică-te pentru a citi", "Sign in to read")}</h2><p>{ui("Cartea este disponibilă în contul cu care ai cumpărat-o.", "Use the account you purchased this book with.")}</p><Link href={{ pathname: "/login/videoteca", query: { returnUrl: `${router.locale && router.locale !== "ro" ? "/" + router.locale : ""}${router.asPath}` } }} className={styles.primary}>{ui("Autentifică-te", "Sign in")}</Link></div>
               : bookStatus === "error" || chapterStatus === "error" ? <div className={styles.empty} role="alert"><h2>{ui("Lectura nu poate fi încărcată", "Could not load your book")}</h2><p>{message}</p><button className={styles.primary} onClick={retry}>{ui("Reîncearcă", "Retry")}</button></div>
               : ready && !book.chapters.length ? <div className={styles.empty}><span className={styles.emptyIcon}>◇</span><h2>{ui("Cartea nu are capitole încă", "This book has no chapters yet")}</h2><p>{ui("Capitolele vor apărea aici după ce sunt adăugate.", "Chapters will appear here once added.")}</p></div>
               : chapter ? <article className={styles.article} style={{ fontSize: font }} dir={rtl ? "rtl" : "ltr"} lang={book.language}>

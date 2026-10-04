@@ -65,7 +65,7 @@ export type VideoListPage = {
 };
 
 export async function rebuildPublicVideoLibraryCache(): Promise<void> {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined") throw new Error("Reconstruirea trebuie pornită din dashboard.");
   const dashboardAccessToken = window.localStorage.getItem("dashboard_access_token");
   const res = await fetch("/api/admin/video-library-cache/rebuild", {
     method: "POST",
@@ -80,11 +80,19 @@ export async function rebuildPublicVideoLibraryCache(): Promise<void> {
   }
 }
 
+export class VideoCacheRefreshError extends Error {
+  constructor() {
+    super("Videoul a fost salvat, dar cache-ul nu a fost actualizat.");
+    this.name = "VideoCacheRefreshError";
+  }
+}
+
 async function rebuildPublicCacheAfterMutation(action: string): Promise<void> {
   try {
     await rebuildPublicVideoLibraryCache();
   } catch (error) {
     console.error(`[videos.service] Failed to rebuild public video cache after ${action}`, error);
+    throw new VideoCacheRefreshError();
   }
 }
 

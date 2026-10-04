@@ -21,6 +21,11 @@ import {
   stripeAvailability,
 } from "../../../lib/ebooks/billing";
 import { getVatPercentage } from "../../../lib/globalSettings";
+import {
+  assertCustomer,
+  promoEnabled,
+  redeemPromo,
+} from "../../../lib/ebooks/promo";
 export const config = { api: { bodyParser: false } };
 async function rawBody(req) {
   let raw = "";
@@ -45,6 +50,7 @@ async function configInfo() {
         process.env.SANITY_READ_TOKEN,
       ),
     websiteBilling: availability.web,
+    promoEnabled: process.env.EBOOKS_ENABLED === "true" && promoEnabled(),
     mobileBilling: availability,
   };
 }
@@ -132,7 +138,7 @@ export default async function handler(req, res) {
     const admin = readDashboardSession(req);
     if (first === "purchased") {
       method(req, "GET");
-      const user = await requireAuth(req);
+      const user = assertCustomer(await requireAuth(req));
       const access = await db
         .collection("users")
         .doc(user.uid)
@@ -158,14 +164,22 @@ export default async function handler(req, res) {
       // An invalid optional token cannot change ownership or expose chapters.
       if (req.headers.authorization) {
         const user = await requireAuth(req);
-        owned = await hasAccess(db, user.uid, id);
+        if (user.firebase?.sign_in_provider !== "anonymous")
+          owned = await hasAccess(db, user.uid, id);
       }
       const { safe } = await metadata(id, locale, owned || Boolean(admin));
       return res.json({ ...safe, owned });
     }
+    if (second === "redeem") {
+      method(req, "POST");
+      const user = assertCustomer(await requireAuth(req));
+      // New promo grants require a published, visible book (never a draft or archive).
+      await metadata(id, locale, false);
+      return res.json(await redeemPromo(db, user, id, req.body.code));
+    }
     if (second === "checkout") {
       method(req, "POST");
-      const user = await requireAuth(req);
+      const user = assertCustomer(await requireAuth(req));
       return res.json(
         await checkout(
           db,
@@ -178,7 +192,7 @@ export default async function handler(req, res) {
         ),
       );
     }
-    const user = await requireAuth(req);
+    const user = assertCustomer(await requireAuth(req));
     await requireEbookAccess(db, user.uid, id);
     if (second === "chapters") {
       method(req, "GET");

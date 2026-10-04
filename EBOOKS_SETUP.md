@@ -124,3 +124,19 @@ Pagina `/dashboard/ebooks` păstrează sidebarul dashboardului, cu Ebookuri sele
 Comutatorul „Plăți ebookuri pe iOS” este acum exclusiv în `/administrare/setari`, lângă cursurile iOS. Folosește aceeași valoare Firestore existentă și solicită confirmare înainte de salvare. Mutarea interfeței nu activează/dezactivează plata și nu necesită migrare.
 
 Verificări locale: paginile compilate în serverul de dezvoltare; verificare vizuală la 1440 și 390 px; scenarii simulate în browser pentru sincronizare, anulare, salvare, apăsări repetate și erori; 4 teste existente ale API-ului de setări trecute. Verificările simulate nu au scris configurații live. Studio pe originea locală de test `127.0.0.1:3101` cere înregistrarea hostului; nu am schimbat configurația Sanity pentru acest test. Publicarea interfeței necesită deployment Next.js.
+
+## Acces promoțional pe cont
+
+Pagina cărții permite activarea fără plată, prin cod, pentru un cont Firebase real (nu anonim). Accesul este permanent pentru carte și toate traducerile, pe web și mobil cu același UID; promoția nu generează facturi și nu afectează achizițiile Stripe.
+
+Variabile **doar pe server**, de copiat din `.env.local` în Vercel Production:
+- `EBOOK_PROMO_ENABLED=true`
+- `EBOOK_PROMO_CODE_HASH` — hash SHA-256 hex de 64 caractere, pregătit local.
+
+Nu folosi prefixul `NEXT_PUBLIC_` sau `EXPO_PUBLIC_` pentru hash/cod. Codul nu se include în bundle. Configurarea Vercel și redeployul se fac separat; aplicația necesită publicarea unei versiuni noi pentru formularul promoțional. Setarea `false` oprește activările noi, păstrând accesul acordat anterior.
+
+API: `POST /api/ebooks/:ebookId/redeem`, Bearer Firebase, `{ code }`. Codul este sensibil la majuscule; spațiile exterioare sunt eliminate. Sunt permise 5 încercări per UID în 15 minute, inclusiv între platforme și cărți. Activarea este tranzacțională și idempotentă. Sursele `promo/granted` și Stripe rămân independente în `users/{uid}/ebookAccess/{ebookId}`.
+
+În regulile Firestore de producție trebuie păstrat accesul exclusiv prin Admin SDK pentru `ebookAccess`, `ebookProgress` și `ebookPromoAttempts`. Fișierul local `expo-mobile-app/firestore.rules` include regula pentru noul contor. Verifică să nu existe alte reguli generale care permit scrierea acestor căi; regulile Firestore se cumulează. Nu se face deployment automat al regulilor.
+
+Validarea locală cu API-uri simulate nu dovedește sincronizarea live. După redeploy și publicarea aplicației, verifică același cont real în ambele direcții (web → mobil, mobil → web), traducerile și progresul.

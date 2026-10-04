@@ -18,6 +18,8 @@ import {
   togglePublish,
   type VideoListCursor,
   updateVideo,
+  VideoCacheRefreshError,
+  rebuildPublicVideoLibraryCache,
 } from "../services/videos.service";
 import { flushAdminUiLogQueue, logAdminUiEvent } from "../services/adminUiLogs.client";
 import VideoTable from "./VideoTable";
@@ -198,6 +200,21 @@ export default function VideoLibraryAdminScreen() {
   const [activeTab, setActiveTab] = useState<"videos" | "categories">("videos");
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [cacheWarning, setCacheWarning] = useState("");
+  const [retryingCache, setRetryingCache] = useState(false);
+
+  const retryCache = async () => {
+    setRetryingCache(true);
+    try {
+      await rebuildPublicVideoLibraryCache();
+      setCacheWarning("");
+      setSuccessMessage("Cache-ul video a fost actualizat.");
+    } catch (_) {
+      setCacheWarning("Cache-ul nu a fost actualizat. Reîncearcă reconstruirea.");
+    } finally {
+      setRetryingCache(false);
+    }
+  };
   const [searchValue, setSearchValue] = useState("");
   const [platformFilter, setPlatformFilter] = useState<VideoPlatform | "all">("all");
   const [publishFilter, setPublishFilter] = useState<PublishFilter>("all");
@@ -516,10 +533,14 @@ export default function VideoLibraryAdminScreen() {
     setSuccessMessage("");
     try {
       await deleteVideo(video.id);
+      setCacheWarning("");
       await refreshVideos();
       setSuccessMessage("Videoclip șters.");
-    } catch (_) {
-      setErrorMessage("Ștergerea a eșuat.");
+    } catch (error) {
+      if (error instanceof VideoCacheRefreshError) {
+        setCacheWarning("Videoul a fost șters, dar cache-ul nu a fost actualizat.");
+        await refreshVideos();
+      } else setErrorMessage("Ștergerea a eșuat.");
     } finally {
       setLoading(false);
     }
@@ -531,10 +552,14 @@ export default function VideoLibraryAdminScreen() {
     setSuccessMessage("");
     try {
       await togglePublish(video.id, nextValue);
+      setCacheWarning("");
       await refreshVideos();
       setSuccessMessage(nextValue ? "Videoclip publicat." : "Videoclip ascuns.");
-    } catch (_) {
-      setErrorMessage("Actualizarea statusului a eșuat.");
+    } catch (error) {
+      if (error instanceof VideoCacheRefreshError) {
+        setCacheWarning(error.message);
+        await refreshVideos();
+      } else setErrorMessage("Actualizarea statusului a eșuat.");
     } finally {
       setLoading(false);
     }
@@ -568,6 +593,7 @@ export default function VideoLibraryAdminScreen() {
         await createVideo(data);
         setSuccessMessage("Videoclip creat.");
       }
+      setCacheWarning("");
       logCreateEvent(
         "create_submit_success",
         "info",
@@ -581,6 +607,14 @@ export default function VideoLibraryAdminScreen() {
       await refreshVideos();
       await refreshCategories();
     } catch (error) {
+      if (error instanceof VideoCacheRefreshError) {
+        setCacheWarning(error.message);
+        setShowForm(false);
+        setEditingVideo(null);
+        await refreshVideos();
+        await refreshCategories();
+        return;
+      }
       console.error("[VideoLibraryAdminScreen] Save failed", error);
       logCreateEvent(
         "create_submit_error",
@@ -844,6 +878,15 @@ export default function VideoLibraryAdminScreen() {
               </div>
             </div>
 
+            {cacheWarning && (
+              <div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 px-5 py-4 text-sm text-amber-900">
+                <p>{cacheWarning}</p>
+                <button type="button" disabled={retryingCache || loading} onClick={retryCache}
+                  className="mt-2 rounded-lg bg-amber-900 px-4 py-2 text-white disabled:opacity-50">
+                  {retryingCache ? "Se reconstruiește..." : "Reîncearcă reconstruirea cache-ului"}
+                </button>
+              </div>
+            )}
             {(errorMessage || successMessage) && (
               <div
           className={`rounded-xl border px-5 py-4 text-sm font-medium shadow-sm ${

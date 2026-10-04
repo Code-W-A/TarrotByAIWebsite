@@ -93,7 +93,6 @@ export default defineConfig({
   },
   document: {
     actions: (prev, context) => [
-      PreviewAction,
       ...prev.filter((action) => {
         // Published content is retained for existing purchasers. Archive the root book.
         if (
@@ -103,6 +102,7 @@ export default defineConfig({
           return false;
         return true;
       }),
+      PreviewAction,
     ],
   },
 });

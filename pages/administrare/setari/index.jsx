@@ -3,6 +3,7 @@ import Head from "next/head";
 import Dialog from "@mui/material/Dialog";
 import { useRouter } from "next/router";
 import LocalPasswordGate from "../../../components/Dashboard/LocalPasswordGate";
+import VideoCacheSettings from "../../../components/Dashboard/VideoCacheSettings";
 
 function SettingsScreen() {
   const router = useRouter();
@@ -389,6 +390,7 @@ function SettingsScreen() {
           </div>
         </div>
 
+        <VideoCacheSettings />
         {/* Error */}
         {!loading && (
           <section className="mb-6 rounded-xl border bg-white p-5">

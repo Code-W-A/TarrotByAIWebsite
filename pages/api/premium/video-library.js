@@ -1,5 +1,5 @@
 import { normalizeLocale, readSingleQueryValue } from "../../../lib/courses";
-import { loadFreshPremiumVideoLibraryRows, loadPremiumVideoLibraryVideos, loadPremiumVideoLibraryVideosByCategory, CATEGORY_VIDEOS_INITIAL_LIMIT, CATEGORY_VIDEOS_LOAD_MORE_LIMIT } from "../../../lib/loadPremiumVideoLibrary";
+import { loadPremiumVideoLibraryRows, loadPremiumVideoLibraryVideos, loadPremiumVideoLibraryVideosByCategory, CATEGORY_VIDEOS_INITIAL_LIMIT, CATEGORY_VIDEOS_LOAD_MORE_LIMIT } from "../../../lib/loadPremiumVideoLibrary";
 import { getOptionalAuth } from "../../../lib/requireAuth";
 import {
   resolvePublicVideoLibraryPremiumActive,
@@ -106,8 +106,9 @@ async function handler(req, res) {
       }
     }
 
-    // One full source query shared by the list, category pagination and audit.
-    const rowsForMeta = await loadFreshPremiumVideoLibraryRows();
+    // One complete, verified catalog shared by list, pagination and audit.
+    // Only source rows are cached; access and release rules run per request.
+    const rowsForMeta = await loadPremiumVideoLibraryRows();
     const videosResult = await (
       categoryFilterActive
         ? loadPremiumVideoLibraryVideosByCategory({
