@@ -65,9 +65,9 @@ export default function EbookDashboard() {
                   sx={{ textTransform: "none", borderColor: "#cbd5e1", color: "#475569", bgcolor: "white", whiteSpace: "nowrap" }}>
                   {syncing ? "Se sincronizează…" : "Sincronizează catalogul"}
                 </Button>
-                <Button component="a" href="/ebook-studio/" target="_blank" rel="noopener noreferrer" variant="contained" endIcon={<OpenInNewIcon />}
+                <Button component="a" href="/ebook-studio/intent/create/type=ebook" target="_blank" rel="noopener noreferrer" variant="contained" endIcon={<OpenInNewIcon />}
                   sx={{ textTransform: "none", bgcolor: "#6d28d9", boxShadow: "none", "&:hover": { bgcolor: "#5b21b6" }, whiteSpace: "nowrap" }}>
-                  Deschide editorul separat
+                  Adaugă ebook · editor separat
                 </Button>
               </Stack>
             </Stack>
