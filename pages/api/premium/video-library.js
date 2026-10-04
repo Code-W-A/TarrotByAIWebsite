@@ -1,8 +1,6 @@
 import { normalizeLocale, readSingleQueryValue } from "../../../lib/courses";
-import { setDynamicPublicCacheHeaders } from "../../../lib/httpCache";
-import { loadPremiumVideoLibraryRows, loadPremiumVideoLibraryVideos, loadPremiumVideoLibraryVideosByCategory, CATEGORY_VIDEOS_INITIAL_LIMIT, CATEGORY_VIDEOS_LOAD_MORE_LIMIT } from "../../../lib/loadPremiumVideoLibrary";
+import { loadFreshPremiumVideoLibraryRows, loadPremiumVideoLibraryVideos, loadPremiumVideoLibraryVideosByCategory, CATEGORY_VIDEOS_INITIAL_LIMIT, CATEGORY_VIDEOS_LOAD_MORE_LIMIT } from "../../../lib/loadPremiumVideoLibrary";
 import { getOptionalAuth } from "../../../lib/requireAuth";
-import { getNextVideoTransitionAtMs } from "../../../lib/videoReleaseSchedule";
 import {
   resolvePublicVideoLibraryPremiumActive,
   resolveVideoLibraryPremiumAccessForUser,
@@ -29,6 +27,9 @@ async function handler(req, res) {
   const requestId = buildRequestId();
   const requestTelemetry = buildVideoRequestTelemetry(req);
   res.setHeader("X-Request-Id", requestId);
+  res.setHeader("Cache-Control", "private, no-store, max-age=0");
+  res.setHeader("CDN-Cache-Control", "no-store");
+  res.setHeader("Vercel-CDN-Cache-Control", "no-store");
 
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
@@ -105,10 +106,13 @@ async function handler(req, res) {
       }
     }
 
-    const [videosResult, rowsForMeta] = await Promise.all([
+    // One full source query shared by the list, category pagination and audit.
+    const rowsForMeta = await loadFreshPremiumVideoLibraryRows();
+    const videosResult = await (
       categoryFilterActive
         ? loadPremiumVideoLibraryVideosByCategory({
             locale,
+            rows: rowsForMeta,
             premiumActive,
             premiumSpotlightOnly,
             webClient,
@@ -119,12 +123,12 @@ async function handler(req, res) {
           })
         : loadPremiumVideoLibraryVideos({
             locale,
+            rows: rowsForMeta,
             premiumActive,
             premiumSpotlightOnly,
             webClient,
-          }).then((videos) => ({ videos, nextCursor: null, hasMore: false, totalCount: videos.length })),
-      loadPremiumVideoLibraryRows(),
-    ]);
+          }).then((videos) => ({ videos, nextCursor: null, hasMore: false, totalCount: videos.length }))
+    );
 
     const videos = videosResult.videos;
     const playbackSummary = summarizeVideoPlaybackDtos(videos);
@@ -148,24 +152,6 @@ async function handler(req, res) {
     });
 
     const nowMs = Date.now();
-    let cacheMeta = { cacheTtlSec: 0 };
-    if (uid) {
-      res.setHeader("Cache-Control", "private, no-store, max-age=0");
-    } else {
-      const nextVideoTransitionAtMs = getNextVideoTransitionAtMs(
-        rowsForMeta,
-        nowMs
-      );
-      cacheMeta = setDynamicPublicCacheHeaders(res, {
-        nowMs,
-        nextPublishAtMs: nextVideoTransitionAtMs,
-        maxAgeSeconds: 300,
-        // Keep the five-minute shared cache, but never serve an extra ten
-        // minutes of obsolete catalog while revalidating after publication.
-        staleWhileRevalidateSeconds: 0,
-      });
-    }
-
     auditVideoLibraryResponse({
       stage: "video_library_list_response",
       requestId,
@@ -231,7 +217,7 @@ async function handler(req, res) {
       premiumActive,
       loggedIn: Boolean(uid),
       generatedAt: new Date(nowMs).toISOString(),
-      cacheTtlSec: cacheMeta.cacheTtlSec,
+      cacheTtlSec: 0,
       requestId,
       ...(categoryFilterActive
         ? {

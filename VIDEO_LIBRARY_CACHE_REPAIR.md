@@ -1,5 +1,13 @@
 # Repararea catalogului video — 4 octombrie 2026
 
+## Mod temporar fără cache pentru API-ul mobil
+
+La solicitarea proprietarului, `/api/premium/video-library` citește acum toate documentele `isPublished == true` direct din `videosVideoModule`, o singură dată per cerere. Nu folosește memoria catalogului, manifestul sau bucățile materializate. Catalogul și metadatele/paginarea folosesc aceeași citire. Răspunsurile pentru conturi și vizitatori au `Cache-Control`, `CDN-Cache-Control` și `Vercel-CDN-Cache-Control` cu `no-store`; `cacheTtlSec` este 0.
+
+Clinic Dashboard și ecranul videotecii folosesc acest endpoint prin `getPublishedVideos`; ecranul categoriei folosește același endpoint cu filtru și cursor. Paginarea, programările, drepturile Premium și formatul răspunsului se păstrează. Fiecare cerere citește întreaga sursă publicată, inclusiv cererile paginilor unei categorii; costul de reads crește pe durata diagnosticului. Cache-ul local al aplicației poate fi folosit în continuare dacă cererea de rețea eșuează.
+
+Verificare locală: 26 teste trecute, inclusiv citire repetată din sursă fără acces la cache, catalog complet și headers `no-store` cu/fără autentificare. Activarea live necesită deploymentul acestei modificări pe Vercel.
+
 ## Ce se schimbă
 
 Doar backendul Next.js și instrumentul administrativ de reconstruire. Aplicația mobilă, URL-urile, câmpurile DTO și paginarea rămân compatibile. Drepturile Premium, programările și regulile pentru sursele video continuă să fie aplicate la fiecare răspuns.
