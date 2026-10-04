@@ -1,6 +1,7 @@
 import * as React from "react";
 import { styled, createTheme, ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
+import useMediaQuery from "@mui/material/useMediaQuery";
 import MuiDrawer from "@mui/material/Drawer";
 import Box from "@mui/material/Box";
 import MuiAppBar from "@mui/material/AppBar";
@@ -146,7 +147,11 @@ export default function CustomDrawer(props) {
   const basePath = props.basePath || "/dashboard";
   const variant = props.variant || "content";
   const shellTitle = variant === "admin" ? "Administrare" : "Dashboard";
-  const [open, setOpen] = React.useState(true);
+  const desktop = useMediaQuery(defaultTheme.breakpoints.up("md"));
+  const [open, setOpen] = React.useState(!props.responsive);
+  React.useEffect(() => {
+    if (props.responsive) setOpen(desktop);
+  }, [desktop, props.responsive]);
   const [selectedItem, setSelectedItem] = React.useState(
     props.selectedItem ? props.selectedItem : ""
   );
@@ -580,6 +585,8 @@ export default function CustomDrawer(props) {
                 />
               </ListItemButton>
               <ListItemButton
+                selected={selectedItem === "Ebookuri"}
+                aria-current={selectedItem === "Ebookuri" ? "page" : undefined}
                 onClick={() =>
                   handleSelectedItem({ screen: "ebooks", text: "Ebookuri" })
                 }
@@ -740,6 +747,7 @@ export default function CustomDrawer(props) {
             flexGrow: 1,
             height: "100vh",
             overflow: "auto",
+            ...props.mainSx,
           }}
         >
           <Toolbar />

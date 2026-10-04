@@ -1,5 +1,6 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import Head from "next/head";
+import Dialog from "@mui/material/Dialog";
 import { useRouter } from "next/router";
 import LocalPasswordGate from "../../../components/Dashboard/LocalPasswordGate";
 
@@ -17,6 +18,7 @@ function SettingsScreen() {
     androidBillingPremiumProvider: "revenuecat",
     androidBillingAnalysesProvider: "stripe",
     iosCoursesHidden: true,
+    iosEbooksStripeEnabled: false,
     mobileUpdatePromptEnabled: false,
     mobileForceUpdateEnabled: false,
     mobileMinAppVersionIos: "",
@@ -25,6 +27,8 @@ function SettingsScreen() {
   });
   const [pendingToggle, setPendingToggle] = useState(null);
   const [pendingIosCoursesToggle, setPendingIosCoursesToggle] = useState(null);
+  const [pendingIosEbooksToggle, setPendingIosEbooksToggle] = useState(null);
+  const ebooksSaveInFlight = useRef(false);
   const [pendingMobileToggle, setPendingMobileToggle] = useState(null);
   const [pendingMobileForceToggle, setPendingMobileForceToggle] = useState(null);
 
@@ -32,7 +36,9 @@ function SettingsScreen() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/dashboard/settings");
+      const res = await fetch("/api/dashboard/settings", {
+        credentials: "same-origin", cache: "no-store",
+      });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || "load_failed");
       setSettings(
@@ -44,6 +50,7 @@ function SettingsScreen() {
           androidBillingPremiumProvider: "revenuecat",
           androidBillingAnalysesProvider: "stripe",
           iosCoursesHidden: true,
+          iosEbooksStripeEnabled: false,
           mobileUpdatePromptEnabled: false,
           mobileForceUpdateEnabled: false,
           mobileMinAppVersionIos: "",
@@ -138,6 +145,33 @@ function SettingsScreen() {
 
   const cancelIosCoursesToggle = () => {
     setPendingIosCoursesToggle(null);
+  };
+
+  const confirmIosEbooksToggle = async () => {
+    if (pendingIosEbooksToggle === null || ebooksSaveInFlight.current) return;
+    ebooksSaveInFlight.current = true;
+    setSaving(true);
+    setError("");
+    setSuccess("");
+    try {
+      const response = await fetch("/api/dashboard/settings", {
+        method: "POST", credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ iosEbooksStripeEnabled: pendingIosEbooksToggle }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.settings) throw new Error(payload.error || "Setarea nu a putut fi salvată.");
+      setSettings(payload.settings);
+      setSuccess("Setarea pentru plățile ebookurilor pe iOS a fost salvată. Actualizarea în aplicație poate dura până la 5 minute.");
+      setPendingIosEbooksToggle(null);
+    } catch (e) {
+      setError(e?.message || "Eroare la salvare");
+      // Close the dialog so the page-level error and unchanged switch are visible.
+      setPendingIosEbooksToggle(null);
+    } finally {
+      ebooksSaveInFlight.current = false;
+      setSaving(false);
+    }
   };
 
   const saveAndroidBillingProvider = async (field, provider) => {
@@ -622,6 +656,35 @@ function SettingsScreen() {
             </div>
           </div>
 
+          <section aria-labelledby="ios-ebooks-title" className="mt-8 max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 id="ios-ebooks-title" className="mb-2 text-lg font-semibold text-slate-900">Plăți ebookuri pe iOS</h2>
+            <p className="mb-4 text-sm text-slate-600">
+              Controlează cumpărarea ebookurilor prin Stripe în aplicația pentru iPhone.
+              Citirea cărților deja cumpărate rămâne disponibilă. Actualizarea în aplicație poate dura până la 5 minute.
+            </p>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <p className="font-medium text-slate-900">
+                    Stripe pentru ebookuri iOS este <span className={settings.iosEbooksStripeEnabled === true ? "text-emerald-600" : "text-slate-500"}>
+                      {settings.iosEbooksStripeEnabled === true ? "ACTIVAT" : "DEZACTIVAT"}
+                    </span>
+                  </p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    {settings.iosEbooksStripeEnabled === true ? "Cumpărarea prin Stripe este permisă pe iPhone." : "Cumpărarea prin Stripe este oprită pe iPhone."}
+                  </p>
+                </div>
+                <button type="button" role="switch" aria-label="Plăți ebookuri prin Stripe pe iOS"
+                  aria-checked={settings.iosEbooksStripeEnabled === true}
+                  disabled={saving || pendingToggle !== null || pendingIosCoursesToggle !== null || pendingIosEbooksToggle !== null || pendingMobileToggle !== null || pendingMobileForceToggle !== null}
+                  onClick={() => setPendingIosEbooksToggle(settings.iosEbooksStripeEnabled !== true)}
+                  className={`relative inline-flex h-7 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 ${settings.iosEbooksStripeEnabled === true ? "bg-emerald-500" : "bg-slate-300"}`}>
+                  <span className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow transition ${settings.iosEbooksStripeEnabled === true ? "translate-x-7" : "translate-x-0"}`} />
+                </button>
+              </div>
+            </div>
+          </section>
+
           <div className="mt-8 max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="mb-2 text-lg font-semibold text-slate-900">TVA afișat</h2>
             <p className="mb-4 text-sm text-slate-600">
@@ -998,6 +1061,24 @@ function SettingsScreen() {
             </div>
           </div>
         )}
+
+        <Dialog open={pendingIosEbooksToggle !== null} onClose={() => { if (!saving) setPendingIosEbooksToggle(null); }}
+          aria-labelledby="ios-ebooks-dialog-title" aria-describedby="ios-ebooks-dialog-description"
+          PaperProps={{ sx: { borderRadius: 4, p: 3, width: "100%", maxWidth: 448 } }}>
+          <h2 id="ios-ebooks-dialog-title" className="text-lg font-semibold text-slate-900">Confirmare — plăți ebookuri iOS</h2>
+          <p id="ios-ebooks-dialog-description" className="mt-4 text-sm text-slate-600">
+            {pendingIosEbooksToggle ? "Activați cumpărarea ebookurilor prin Stripe pe iPhone?" : "Opriți cumpărarea ebookurilor prin Stripe pe iPhone?"}
+            {" "}Citirea cărților cumpărate rămâne disponibilă. Actualizarea poate dura până la 5 minute.
+          </p>
+          <div className="mt-6 flex justify-end gap-3 border-t border-slate-100 pt-4">
+            <button type="button" autoFocus disabled={saving} onClick={() => setPendingIosEbooksToggle(null)}
+              className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50">Anulează</button>
+            <button type="button" disabled={saving} onClick={confirmIosEbooksToggle}
+              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-50">
+              {saving ? "Se salvează…" : pendingIosEbooksToggle ? "Activează" : "Dezactivează"}
+            </button>
+          </div>
+        </Dialog>
 
         {pendingIosCoursesToggle !== null && (
           <div

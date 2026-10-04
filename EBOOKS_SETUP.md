@@ -38,7 +38,7 @@ Capitolele păstrează `_key` generat de Studio la editare/reordonare; nu șterg
 - Aplicația folosește `CourseCheckoutBillingForm` și Stripe Checkout într-un WebView, ca la cursuri. Cererea `POST /api/ebooks/{id}/checkout` include `billingDetails` și `platform: "ios" | "android"`; headerul `x-app-platform` identifică de asemenea platforma.
 - Răspunsul este `{url, returnUrlBase}`. URL-urile de succes/anulare sunt generate exclusiv de server, pe domeniul site-ului, pentru cartea curentă. Aplicația recunoaște doar revenirea la acel URL și verifică accesul prin API. Revenirea cu `checkout=success` nu acordă acces.
 - `GET /api/ebooks/config` expune `websiteBilling` și `mobileBilling: {web, android, ios}`. Butonul de plată este dezactivat când checkoutul nu este configurat.
-- Plata ebookurilor pe iOS are setarea proprie `settings/global.iosEbooksStripeEnabled`, implicit `false`. Se activează separat din `/dashboard/ebooks` → „Plăți ebookuri pe iOS”. Nu depinde de `iosCoursesHidden`. Dacă setările nu pot fi citite, plata iOS este blocată. Backendul verifică atât platforma din corp, cât și headerul; citirea cărților deja cumpărate rămâne disponibilă. Cache-ul setărilor poate întârzia propagarea până la 5 minute.
+- Plata ebookurilor pe iOS are setarea proprie `settings/global.iosEbooksStripeEnabled`, implicit `false`. Se activează separat din `/administrare/setari` → „Plăți ebookuri pe iOS”. Nu depinde de `iosCoursesHidden`. Dacă setările nu pot fi citite, plata iOS este blocată. Backendul verifică atât platforma din corp, cât și headerul; citirea cărților deja cumpărate rămâne disponibilă. Cache-ul setărilor poate întârzia propagarea până la 5 minute.
 - Ebookurile nu au produse Apple/Google, confirmare RevenueCat sau restaurare prin magazine. După reinstalare, autentificarea în același cont încarcă automat „Cărțile mele”. Fluxurile RevenueCat existente pentru alte produse rămân separate.
 
 ## Firebase, UI și rollout
@@ -115,4 +115,12 @@ Deployment Production `7AbYa6zrQKKjfSxpS34GcqeXAiFx` a ajuns la Ready. Verifică
 
 ### Separarea setării iOS pentru ebookuri
 
-Codul local folosește acum `iosEbooksStripeEnabled`, cu comutator în dashboardul ebookurilor și salvare prin API-ul autentificat de setări. Înregistrările live de mai sus descriu deploymentul anterior, care folosea politica cursurilor. Separarea necesită un nou deployment; nu a fost activată în Firestore sau publicată prin această modificare. Nu s-au rulat teste pentru această modificare.
+Codul local folosește acum `iosEbooksStripeEnabled`, cu comutator în `/administrare/setari` și salvare prin API-ul autentificat de setări. Înregistrările live de mai sus descriu deploymentul anterior, care folosea politica cursurilor. Separarea necesită un nou deployment; nu a fost activată în Firestore sau publicată prin această modificare. Nu s-au rulat teste pentru această modificare.
+
+## Reorganizarea interfeței — 4 octombrie 2026
+
+Pagina `/dashboard/ebooks` păstrează sidebarul dashboardului, cu Ebookuri selectat, și afișează editorul Sanity într-un panou adaptat la desktop și mobil. „Deschide editorul separat” deschide `/ebook-studio/` într-o filă nouă; autentificarea Sanity rămâne proprie editorului. Sincronizarea manuală blochează apăsările repetate și afișează succesul sau eroarea.
+
+Comutatorul „Plăți ebookuri pe iOS” este acum exclusiv în `/administrare/setari`, lângă cursurile iOS. Folosește aceeași valoare Firestore existentă și solicită confirmare înainte de salvare. Mutarea interfeței nu activează/dezactivează plata și nu necesită migrare.
+
+Verificări locale: paginile compilate în serverul de dezvoltare; verificare vizuală la 1440 și 390 px; scenarii simulate în browser pentru sincronizare, anulare, salvare, apăsări repetate și erori; 4 teste existente ale API-ului de setări trecute. Verificările simulate nu au scris configurații live. Studio pe originea locală de test `127.0.0.1:3101` cere înregistrarea hostului; nu am schimbat configurația Sanity pentru acest test. Publicarea interfeței necesită deployment Next.js.
