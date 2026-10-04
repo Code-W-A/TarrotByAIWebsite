@@ -79,7 +79,14 @@ export default defineConfig({
         ],
         value: ({ bookId, language }) => ({
           language,
-          book: { _type: "reference", _ref: bookId },
+          book: {
+            _type: "reference",
+            _ref: bookId.replace(/^drafts\./, ""),
+            // A new book may exist only as a draft. Studio strengthens this
+            // reference when publishing, once the parent book is published.
+            _weak: true,
+            _strengthenOnPublish: { type: "ebook" },
+          },
         }),
       },
     ],
