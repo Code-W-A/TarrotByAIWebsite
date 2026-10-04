@@ -613,5 +613,6 @@
   "premiumRecurringNotice": "Subskrypcja Premium — {{price}}/miesiąc. Płatność odnawia się automatycznie co miesiąc do anulowania.",
   "premiumRecurringConsent": "Rozumiem i akceptuję cykliczne płatności miesięczne do anulowania subskrypcji.",
   "premiumRecurringRequired": "Zaakceptuj cykliczne płatności przed przejściem do płatności.",
-  "premiumRecurringExpired": "Oferta zmieniła się lub wygasła. Sprawdź cenę i potwierdź ponownie."
+  "premiumRecurringExpired": "Oferta zmieniła się lub wygasła. Sprawdź cenę i potwierdź ponownie.",
+  "premiumRecurringUnavailable": "Nie udało się rozpocząć realizacji zamówienia. Spróbuj ponownie."
 }

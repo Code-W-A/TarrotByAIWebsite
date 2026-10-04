@@ -613,5 +613,6 @@
   "premiumRecurringNotice": "Premium pretplata — {{price}}/mjesečno. Plaćanje se automatski obnavlja svakog mjeseca do otkazivanja.",
   "premiumRecurringConsent": "Razumijem i prihvaćam ponavljajuća mjesečna plaćanja do otkazivanja pretplate.",
   "premiumRecurringRequired": "Prihvatite ponavljajuća plaćanja prije nastavka na plaćanje.",
-  "premiumRecurringExpired": "Ponuda se promijenila ili je istekla. Provjerite cijenu i ponovno potvrdite."
+  "premiumRecurringExpired": "Ponuda se promijenila ili je istekla. Provjerite cijenu i ponovno potvrdite.",
+  "premiumRecurringUnavailable": "Nismo mogli započeti s plaćanjem. Pokušajte ponovno."
 }

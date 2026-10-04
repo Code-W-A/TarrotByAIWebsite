@@ -76,6 +76,11 @@ export default async function handler(req, res) {
       });
       const iosCoursesHiddenUpdate =
         typeof body.iosCoursesHidden === "boolean" ? body.iosCoursesHidden : undefined;
+      const iosEbooksStripeUpdate =
+        typeof body.iosEbooksStripeEnabled === "boolean" ? body.iosEbooksStripeEnabled : undefined;
+      if (body.iosEbooksStripeEnabled !== undefined && iosEbooksStripeUpdate === undefined) {
+        return res.status(400).json({ error: "Setare ebookuri iOS invalidă." });
+      }
       const mobilePromptUpdate =
         typeof body.mobileUpdatePromptEnabled === "boolean"
           ? body.mobileUpdatePromptEnabled
@@ -98,6 +103,7 @@ export default async function handler(req, res) {
         subscriptionUpdate === undefined &&
         Object.keys(billingProviderUpdates).length === 0 &&
         iosCoursesHiddenUpdate === undefined &&
+        iosEbooksStripeUpdate === undefined &&
         mobilePromptUpdate === undefined &&
         mobileForceUpdate === undefined &&
         !mobileMinIosProvided &&
@@ -178,6 +184,12 @@ export default async function handler(req, res) {
       if (iosCoursesHiddenUpdate !== undefined) {
         await updateGlobalSettings(
           { iosCoursesHidden: iosCoursesHiddenUpdate },
+          "dashboard"
+        );
+      }
+      if (iosEbooksStripeUpdate !== undefined) {
+        await updateGlobalSettings(
+          { iosEbooksStripeEnabled: iosEbooksStripeUpdate },
           "dashboard"
         );
       }

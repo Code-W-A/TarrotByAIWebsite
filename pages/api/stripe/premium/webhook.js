@@ -196,8 +196,9 @@ export default async function handler(req, res) {
       case "invoice.payment_succeeded":
       case "invoice.payment_failed": {
         const invoice = event.data.object;
-        const subId = invoice.subscription;
-        if (!subId || typeof subId !== "string") break;
+        const invoiceSubscription = invoice.subscription || invoice.parent?.subscription_details?.subscription;
+        const subId = typeof invoiceSubscription === "string" ? invoiceSubscription : invoiceSubscription?.id;
+        if (!subId) break;
         await syncPremiumSubscriptionById(stripe, subId, {
           eventTimestampMs: event.created * 1000,
         });

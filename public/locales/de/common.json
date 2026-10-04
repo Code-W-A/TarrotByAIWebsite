@@ -613,5 +613,6 @@
   "premiumRecurringNotice": "Premium-Abonnement — {{price}}/Monat. Die Zahlung wird bis zur Kündigung jeden Monat automatisch wiederholt.",
   "premiumRecurringConsent": "Ich verstehe und akzeptiere wiederkehrende monatliche Zahlungen bis zur Kündigung des Abonnements.",
   "premiumRecurringRequired": "Akzeptieren Sie wiederkehrende Zahlungen, bevor Sie zur Zahlung fortfahren.",
-  "premiumRecurringExpired": "Das Angebot hat sich geändert oder ist abgelaufen. Prüfen Sie den Preis und bestätigen Sie erneut."
+  "premiumRecurringExpired": "Das Angebot hat sich geändert oder ist abgelaufen. Prüfen Sie den Preis und bestätigen Sie erneut.",
+  "premiumRecurringUnavailable": "Der Bestellvorgang konnte nicht gestartet werden. Bitte versuchen Sie es erneut."
 }

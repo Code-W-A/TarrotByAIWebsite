@@ -613,5 +613,6 @@
   "premiumRecurringNotice": "اشتراك Premium — {{price}}/شهر. تتجدد الدفعة تلقائيًا كل شهر حتى الإلغاء.",
   "premiumRecurringConsent": "أفهم وأوافق على الدفعات الشهرية المتكررة حتى إلغاء الاشتراك.",
   "premiumRecurringRequired": "وافق على الدفعات المتكررة قبل المتابعة إلى الدفع.",
-  "premiumRecurringExpired": "تغير العرض أو انتهت صلاحيته. تحقق من السعر وأكد مرة أخرى."
+  "premiumRecurringExpired": "تغير العرض أو انتهت صلاحيته. تحقق من السعر وأكد مرة أخرى.",
+  "premiumRecurringUnavailable": "لم نتمكن من بدء عملية الدفع. يرجى المحاولة مرة أخرى."
 }

@@ -11,7 +11,7 @@ let sequence = 0;
 function collection(path) { return { doc: id => reference(`${path}/${id || `test-${++sequence}`}`) }; }
 const db = { collection, runTransaction: async callback => callback({ get: ref => ref.get(), set: (ref,data) => ref.set(data), update: (ref,data) => ref.update(data) }) };
 jest.mock('../../lib/firebaseAdmin', () => ({ getAdminDb: () => db }));
-jest.mock('../../lib/requireAuth', () => ({ requireAuth: async () => ({ uid: 'isolated-consent-test', email: 'consent-test@example.com' }) }));
+jest.mock('../../lib/requireAuth', () => ({ requireAuth: async () => ({ uid: 'isolated-consent-test', email: 'consent-test@example.com' }), omitFirebaseIdTokenFromPayload: body => body }));
 jest.mock('../../lib/globalSettings', () => ({ getVatPercentage: async () => 21, isIosPremiumSubscriptionsEnabled: async () => true }));
 jest.mock('../../lib/stripePremiumEnv', () => ({ resolvePremiumStripePriceId: () => process.env.CONSENT_INTEGRATION_PRICE_ID, isStripePremiumUsingLocalOverrides: () => false }));
 jest.mock('../../lib/stripeFixedVatServer', () => ({ getFixedVatTaxRateId: async () => process.env.CONSENT_INTEGRATION_TAX_ID }));
@@ -28,6 +28,11 @@ suite('real Stripe test subscription consent', () => {
   const Stripe = require('stripe').default || require('stripe'); const stripe = new Stripe(key, { maxNetworkRetries: 1 });
   let product, price, tax, session, subscription, customer;
   try {
+   // Recover isolated incomplete fixtures left by an interrupted earlier test run.
+   const stale = await stripe.subscriptions.list({ status: 'incomplete', limit: 100 });
+   for (const item of stale.data) if (item.metadata.uid === 'isolated-consent-test') await stripe.subscriptions.cancel(item.id);
+   const staleCustomers = await stripe.customers.list({ email: 'consent-test@example.com', limit: 100 });
+   for (const item of staleCustomers.data) await stripe.customers.del(item.id);
    product = await stripe.products.create({ name: 'Isolated recurring-consent integration test' });
    price = await stripe.prices.create({ product: product.id, unit_amount: 500, currency: 'eur', tax_behavior: 'exclusive', recurring: { interval: 'month' } });
    tax = await stripe.taxRates.create({ display_name: 'Test VAT', percentage: 21, inclusive: false });
@@ -46,9 +51,19 @@ suite('real Stripe test subscription consent', () => {
    expect(subscription).toBeTruthy();
    const paid = await stripe.paymentIntents.confirm(mobileRes.data.paymentIntentId || mobileRes.data.paymentIntentClientSecret.split("_secret_")[0], { payment_method: 'pm_card_visa' });
    expect(paid.status).toBe('succeeded'); expect(paid.amount).toBe(605); expect(paid.livemode).toBe(false);
+   const activeSubscription = await stripe.subscriptions.retrieve(subscription);
+   const invoice = await stripe.invoices.retrieve(typeof activeSubscription.latest_invoice === 'string' ? activeSubscription.latest_invoice : activeSubscription.latest_invoice.id);
+   const consentId = invoice.subscription_details?.metadata?.subscriptionConsentId || invoice.parent?.subscription_details?.metadata?.subscriptionConsentId;
+   expect(consentId).toBe(activeSubscription.metadata.subscriptionConsentId);
+   const { linkSubscriptionConsent } = require('../../lib/subscriptionConsent');
+   await linkSubscriptionConsent(db, consentId, { stripeInvoiceId: invoice.id, stripeSubscriptionId: subscription, paymentStatus: 'paid' }, { id: 'evt_test_paid', type: 'invoice.payment_succeeded', created: Math.floor(Date.now() / 1000) });
+   expect(rows.get(`premiumSubscriptionConsents/${consentId}`).paymentStatus).toBe('paid');
    const records = [...rows.values()].filter(row => row.channel && row.acceptedAt);
    expect(records).toHaveLength(2); expect(records.every(row => row.text === quote.text)).toBe(true);
   } finally {
+   const mobileRecord = [...rows.values()].find(row => row.channel === 'mobile' && row.stripeSubscriptionId);
+   subscription ||= mobileRecord?.stripeSubscriptionId;
+   customer ||= rows.get('Users/isolated-consent-test')?.stripeCustomerId;
    if (session?.id) await stripe.checkout.sessions.expire(session.id);
    if (subscription) await stripe.subscriptions.cancel(subscription);
    if (customer) await stripe.customers.del(customer);

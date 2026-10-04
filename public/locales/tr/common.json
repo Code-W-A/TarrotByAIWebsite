@@ -613,5 +613,6 @@
   "premiumRecurringNotice": "Premium abonelik — {{price}}/ay. Ödeme, iptal edilene kadar her ay otomatik olarak yenilenir.",
   "premiumRecurringConsent": "Aboneliği iptal edene kadar tekrarlanan aylık ödemeleri anlıyor ve kabul ediyorum.",
   "premiumRecurringRequired": "Ödemeye geçmeden önce tekrarlanan ödemeleri kabul edin.",
-  "premiumRecurringExpired": "Teklif değişti veya süresi doldu. Fiyatı kontrol edip tekrar onaylayın."
+  "premiumRecurringExpired": "Teklif değişti veya süresi doldu. Fiyatı kontrol edip tekrar onaylayın.",
+  "premiumRecurringUnavailable": "Ödeme işlemine başlayamadık. Lütfen tekrar deneyin.\n"
 }

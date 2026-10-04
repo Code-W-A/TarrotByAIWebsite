@@ -613,5 +613,6 @@
   "premiumRecurringNotice": "Premium 订阅 — 每月 {{price}}。付款每月自动续订，直至取消。",
   "premiumRecurringConsent": "我理解并同意每月定期付款，直至取消订阅。",
   "premiumRecurringRequired": "继续付款前，请同意定期付款。",
-  "premiumRecurringExpired": "优惠已更改或已过期。请检查价格并重新确认。"
+  "premiumRecurringExpired": "优惠已更改或已过期。请检查价格并重新确认。",
+  "premiumRecurringUnavailable": "\n結帳失敗，請重試。\n"
 }

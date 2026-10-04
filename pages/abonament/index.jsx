@@ -491,7 +491,7 @@ export default function AbonamentPage() {
             <p className="mt-1 text-lg font-semibold text-indigo-700 lg:text-xl">
               {t("premiumSubscribePriceLine", { price: premiumPriceText })}
             </p>
-            <p className="mt-3 text-sm font-semibold" dir={router.locale === "ar" || router.locale === "he" ? "rtl" : "ltr"}>{recurring.quote?.text}</p>
+            <p className="mt-3 text-sm font-semibold" dir={router.locale === "ar" || router.locale === "he" ? "rtl" : "ltr"}>{recurring.quote?.text || (recurring.error ? t("premiumRecurringUnavailable") : "")}</p>
             <p
               className={`mt-2 max-w-md text-sm leading-relaxed text-slate-600 lg:mt-1.5 lg:max-w-none lg:text-sm lg:leading-snug ${
                 showCompactHero ? "line-clamp-2 lg:line-clamp-3" : ""

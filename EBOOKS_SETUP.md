@@ -38,7 +38,7 @@ Capitolele păstrează `_key` generat de Studio la editare/reordonare; nu șterg
 - Aplicația folosește `CourseCheckoutBillingForm` și Stripe Checkout într-un WebView, ca la cursuri. Cererea `POST /api/ebooks/{id}/checkout` include `billingDetails` și `platform: "ios" | "android"`; headerul `x-app-platform` identifică de asemenea platforma.
 - Răspunsul este `{url, returnUrlBase}`. URL-urile de succes/anulare sunt generate exclusiv de server, pe domeniul site-ului, pentru cartea curentă. Aplicația recunoaște doar revenirea la acel URL și verifică accesul prin API. Revenirea cu `checkout=success` nu acordă acces.
 - `GET /api/ebooks/config` expune `websiteBilling` și `mobileBilling: {web, android, ios}`. Butonul de plată este dezactivat când checkoutul nu este configurat.
-- Pe iOS se aplică aceeași politică precum la cursuri: `settings/global.iosCoursesHidden` trebuie să fie explicit `false` pentru checkout. Dacă setările nu pot fi citite, plata iOS este blocată. Backendul verifică atât platforma din corp, cât și headerul; citirea cărților deja cumpărate rămâne disponibilă.
+- Plata ebookurilor pe iOS are setarea proprie `settings/global.iosEbooksStripeEnabled`, implicit `false`. Se activează separat din `/dashboard/ebooks` → „Plăți ebookuri pe iOS”. Nu depinde de `iosCoursesHidden`. Dacă setările nu pot fi citite, plata iOS este blocată. Backendul verifică atât platforma din corp, cât și headerul; citirea cărților deja cumpărate rămâne disponibilă. Cache-ul setărilor poate întârzia propagarea până la 5 minute.
 - Ebookurile nu au produse Apple/Google, confirmare RevenueCat sau restaurare prin magazine. După reinstalare, autentificarea în același cont încarcă automat „Cărțile mele”. Fluxurile RevenueCat existente pentru alte produse rămân separate.
 
 ## Firebase, UI și rollout
@@ -81,3 +81,38 @@ Păstrați variabilele Stripe, Firebase și Oblio existente. Cheia Stripe local�
 3. În Stripe configurați endpointul dedicat `https://www.cristinazurba.com/api/ebooks/stripe-webhook`, pentru `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `charge.refunded`. Adăugați secretul în Vercel și redeployați.
 4. Verificați fluxul în mod Stripe test într-un mediu separat; activați checkoutul în producție după validare. Preview deployments necesită propriile variabile, URL-uri și CORS dacă se verifică editorul acolo.
 5. Pentru aplicație, setați `EXPO_PUBLIC_EBOOKS_ENABLED=true` în mediul buildului mobil, apoi publicați separat versiunea aplicației. Această variabilă nu se activează prin Vercel.
+
+### Webhook Stripe creat la 4 octombrie 2026
+
+- Cont: `SPIRIT SOARE ȘI LUNĂ S.R.L.`, `acct_1QA6KbFfPQUdD5PA`; mod **live**.
+- Destinație: **Ebookuri Stripe**, `we_1UMomRFfPQUdD5PAUvsdKJBJ`.
+- URL: `https://www.cristinazurba.com/api/ebooks/stripe-webhook`.
+- Evenimente snapshot: `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `charge.refunded`; API `2024-09-30.acacia`.
+- Status verificat în Stripe la 4 octombrie 2026: **Active**, după verificarea secretului în endpointul de producție.
+- `STRIPE_EBOOK_WEBHOOK_SECRET` este salvat în `.env.local`, ignorat de Git. Acesta este secretul endpointului **live**; cheia API Stripe locală este de test, deci combinația locală nu trebuie folosită pentru procesarea webhookurilor live.
+- Secretul din Vercel a fost verificat printr-un eveniment de diagnostic fără plată: semnătură validă → HTTP 200 `{"skipped":true}`; semnătură invalidă → HTTP 401. Nu au fost create plăți sau drepturi de acces. Aceasta verifică handlerul și secretul, nu livrarea unui eveniment real din Stripe sau o cumpărare.
+
+### Verificare live la 4 octombrie 2026
+
+- `/api/ebooks/config`: HTTP 200, `enabled:false`, `websiteBilling:true`, `mobileBilling:{web:true,android:true,ios:false}`. Activarea ebookurilor necesită flagurile Production și redeploy; plata iOS respectă în continuare configurația cursurilor.
+- `/api/ebooks`: catalog dezactivat, fără cărți. Rutele cumpărătorilor și preview răspund HTTP 503 până la activare; verificarea autentificării trebuie repetată după activare.
+- Datasetul Sanity `production` este privat și conține 0 documente ebook/ebookEdition, verificat prin API autentificat. Pentru verificarea lecturii este necesară o carte cu ediție RO publicată.
+- `/ebooks` și `/dashboard/ebooks` răspund HTTP 200. `/ebook-studio/` răspunde HTTP 200, dar conține pagina „Sanity nu este încă configurat”: la build a lipsit `SANITY_PROJECT_ID` sau `SANITY_DATASET`. Verificați ambele variabile în Production și redeployați înainte de verificarea editorului.
+- Răspunsurile API au `Cache-Control: private, no-store, max-age=0`.
+- Webhookul Sanity „Ebookuri - sincronizare catalog”, ID `XlZUlq7Y6KdXNTQO`, a fost salvat și verificat **Enabled** după confirmarea proprietarului: `production`, POST către endpointul site-ului, creare/update/delete, filtrul ebook/ebookEdition, proiecția `{_id,_type}`, fără drafturi sau versions. Folosește secretul `SANITY_EBOOK_WEBHOOK_SECRET` din `.env.local`.
+- Rămân de verificat: webhookul Sanity și sincronizarea, catalogul activ, conturile și lectura/progresul, checkoutul și accesul după plată, refundurile, livrarea Stripe și aplicația mobilă. Nu s-a făcut o tranzacție reală.
+
+### După redeployul cu configurația completă
+
+Deployment Production `7AbYa6zrQKKjfSxpS34GcqeXAiFx` a ajuns la Ready. Verificări directe pe `www.cristinazurba.com`:
+
+- API: `enabled:true`, checkout configurat web/Android, iOS blocat conform setării cursurilor. Catalog HTTP 200, `books:[]`; în browser „Nu există cărți disponibile”.
+- Studio live a fost verificat autentificat în contul Cristina Zurba: `/ebook-studio/structure/cartiSiEditii` deschide lista „Cărți”. În profilul neautentificat afișează alegerea providerului de login. Bundle-ul principal și bridge-ul au HTTP 200; nu conțin tokenul Viewer sau secretele webhookurilor locale.
+- Fără autentificare: Cărțile mele, capitolele, progresul, checkoutul și preview admin răspund HTTP 401. Token Firebase invalid → HTTP 401.
+- Sanity webhook: diagnostic semnat corect → HTTP 200 `{"synced":0}`; semnătură greșită → HTTP 401. A fost recitit datasetul gol; nu au fost create cărți sau drepturi de acces. Aceasta nu înlocuiește verificarea unei livrări declanșate de publicarea reală în Studio.
+- Aplicația locală: `EXPO_PUBLIC_EBOOKS_ENABLED=true` în `.env.local` ignorat. Nu s-a distribuit build sau OTA mobil.
+- Nu există încă un ebook publicat; lectura, traducerile, progresul dintre dispozitive, plata, facturarea și refundurile nu sunt confirmate cap-coadă în producție.
+
+### Separarea setării iOS pentru ebookuri
+
+Codul local folosește acum `iosEbooksStripeEnabled`, cu comutator în dashboardul ebookurilor și salvare prin API-ul autentificat de setări. Înregistrările live de mai sus descriu deploymentul anterior, care folosea politica cursurilor. Separarea necesită un nou deployment; nu a fost activată în Firestore sau publicată prin această modificare. Nu s-au rulat teste pentru această modificare.

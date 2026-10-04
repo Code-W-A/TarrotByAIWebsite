@@ -613,5 +613,6 @@
   "premiumRecurringNotice": "Abbonamento Premium — {{price}}/mese. Il pagamento si rinnova automaticamente ogni mese fino alla disdetta.",
   "premiumRecurringConsent": "Comprendo e accetto i pagamenti mensili ricorrenti fino alla disdetta dell’abbonamento.",
   "premiumRecurringRequired": "Accetta i pagamenti ricorrenti prima di procedere al pagamento.",
-  "premiumRecurringExpired": "L’offerta è cambiata o è scaduta. Controlla il prezzo e conferma di nuovo."
+  "premiumRecurringExpired": "L’offerta è cambiata o è scaduta. Controlla il prezzo e conferma di nuovo.",
+  "premiumRecurringUnavailable": "Non è stato possibile avviare la procedura di pagamento. Riprova."
 }

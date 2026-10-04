@@ -613,5 +613,6 @@
   "premiumRecurringNotice": "Predplatné Premium — {{price}}/mesiac. Platba sa automaticky opakuje každý mesiac až do zrušenia.",
   "premiumRecurringConsent": "Rozumiem opakovaným mesačným platbám a súhlasím s nimi až do zrušenia predplatného.",
   "premiumRecurringRequired": "Pred pokračovaním k platbe potvrďte súhlas s opakovanými platbami.",
-  "premiumRecurringExpired": "Ponuka sa zmenila alebo vypršala. Skontrolujte cenu a znova potvrďte."
+  "premiumRecurringExpired": "Ponuka sa zmenila alebo vypršala. Skontrolujte cenu a znova potvrďte.",
+  "premiumRecurringUnavailable": "Nepodarilo sa nám spustiť platbu. Skúste to znova."
 }

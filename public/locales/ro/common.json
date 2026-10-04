@@ -621,5 +621,6 @@
   "premiumRecurringNotice": "Abonament Premium — {{price}}/lună. Plata se reînnoiește automat lunar până la anulare.",
   "premiumRecurringConsent": "Înțeleg și accept plata lunară recurentă până la anularea abonamentului.",
   "premiumRecurringRequired": "Confirmă acceptarea plății recurente înainte de plată.",
-  "premiumRecurringExpired": "Oferta s-a schimbat sau a expirat. Verifică prețul și confirmă din nou."
+  "premiumRecurringExpired": "Oferta s-a schimbat sau a expirat. Verifică prețul și confirmă din nou.",
+  "premiumRecurringUnavailable": "Nu am putut porni plata. Încearcă din nou."
 }

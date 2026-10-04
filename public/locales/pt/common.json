@@ -613,5 +613,6 @@
   "premiumRecurringNotice": "Assinatura Premium — {{price}}/mês. O pagamento renova-se automaticamente todos os meses até ao cancelamento.",
   "premiumRecurringConsent": "Compreendo e aceito os pagamentos mensais recorrentes até cancelar a assinatura.",
   "premiumRecurringRequired": "Aceite os pagamentos recorrentes antes de continuar para o pagamento.",
-  "premiumRecurringExpired": "A oferta mudou ou expirou. Verifique o preço e confirme novamente."
+  "premiumRecurringExpired": "A oferta mudou ou expirou. Verifique o preço e confirme novamente.",
+  "premiumRecurringUnavailable": "Não foi possível iniciar o checkout. Tente novamente."
 }

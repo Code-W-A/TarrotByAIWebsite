@@ -613,5 +613,6 @@
   "premiumRecurringNotice": "Abonnement Premium — {{price}}/mois. Le paiement se renouvelle automatiquement chaque mois jusqu’à résiliation.",
   "premiumRecurringConsent": "Je comprends et accepte les paiements mensuels récurrents jusqu’à la résiliation de mon abonnement.",
   "premiumRecurringRequired": "Acceptez les paiements récurrents avant de passer au paiement.",
-  "premiumRecurringExpired": "L’offre a changé ou a expiré. Vérifiez le prix et confirmez à nouveau."
+  "premiumRecurringExpired": "L’offre a changé ou a expiré. Vérifiez le prix et confirmez à nouveau.",
+  "premiumRecurringUnavailable": "Impossible de procéder au paiement. Veuillez réessayer."
 }

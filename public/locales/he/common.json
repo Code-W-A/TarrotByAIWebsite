@@ -613,5 +613,6 @@
   "premiumRecurringNotice": "מנוי Premium — {{price}}/חודש. התשלום מתחדש אוטומטית מדי חודש עד לביטול.",
   "premiumRecurringConsent": "אני מבין/ה ומסכים/ה לתשלומים חודשיים חוזרים עד לביטול המנוי.",
   "premiumRecurringRequired": "יש להסכים לתשלומים חוזרים לפני המעבר לתשלום.",
-  "premiumRecurringExpired": "ההצעה השתנתה או פג תוקפה. יש לבדוק את המחיר ולאשר שוב."
+  "premiumRecurringExpired": "ההצעה השתנתה או פג תוקפה. יש לבדוק את המחיר ולאשר שוב.",
+  "premiumRecurringUnavailable": "לא הצלחנו להתחיל בתשלום. אנא נסה שוב."
 }

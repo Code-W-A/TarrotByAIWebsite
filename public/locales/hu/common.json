@@ -613,5 +613,6 @@
   "premiumRecurringNotice": "Premium előfizetés — {{price}}/hó. A fizetés lemondásig minden hónapban automatikusan megismétlődik.",
   "premiumRecurringConsent": "Megértettem és elfogadom az ismétlődő havi fizetéseket az előfizetés lemondásáig.",
   "premiumRecurringRequired": "A fizetés előtt fogadja el az ismétlődő fizetéseket.",
-  "premiumRecurringExpired": "Az ajánlat megváltozott vagy lejárt. Ellenőrizze az árat, és erősítse meg újra."
+  "premiumRecurringExpired": "Az ajánlat megváltozott vagy lejárt. Ellenőrizze az árat, és erősítse meg újra.",
+  "premiumRecurringUnavailable": "Nem tudtuk elindítani a fizetést. Kérjük, próbálja újra."
 }

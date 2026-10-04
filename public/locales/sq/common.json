@@ -613,5 +613,6 @@
   "premiumRecurringNotice": "Abonim Premium — {{price}}/muaj. Pagesa rinovohet automatikisht çdo muaj deri në anulim.",
   "premiumRecurringConsent": "E kuptoj dhe pranoj pagesat mujore të përsëritura deri në anulimin e abonimit.",
   "premiumRecurringRequired": "Pranoni pagesat e përsëritura përpara se të vazhdoni me pagesën.",
-  "premiumRecurringExpired": "Oferta ka ndryshuar ose ka skaduar. Kontrolloni çmimin dhe konfirmoni sërish."
+  "premiumRecurringExpired": "Oferta ka ndryshuar ose ka skaduar. Kontrolloni çmimin dhe konfirmoni sërish.",
+  "premiumRecurringUnavailable": "Nuk mundëm ta fillonim pagesën. Ju lutemi provoni përsëri."
 }

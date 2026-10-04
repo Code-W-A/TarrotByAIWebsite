@@ -6,7 +6,8 @@ export default async function handler(req, res) {
   try {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
     return res.status(200).json(await getConsentQuote(stripe, req.query.locale));
-  } catch {
+  } catch (error) {
+    console.error("[subscription-consent] quote_unavailable", { message: error?.message });
     return res.status(503).json({ error: "SUBSCRIPTION_CONSENT_UNAVAILABLE" });
   }
 }

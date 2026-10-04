@@ -613,5 +613,6 @@
   "premiumRecurringNotice": "Langganan Premium — {{price}}/bulan. Pembayaran diperpanjang otomatis setiap bulan hingga dibatalkan.",
   "premiumRecurringConsent": "Saya memahami dan menyetujui pembayaran bulanan berulang hingga saya membatalkan langganan.",
   "premiumRecurringRequired": "Setujui pembayaran berulang sebelum melanjutkan ke pembayaran.",
-  "premiumRecurringExpired": "Penawaran berubah atau kedaluwarsa. Periksa harga dan konfirmasikan kembali."
+  "premiumRecurringExpired": "Penawaran berubah atau kedaluwarsa. Periksa harga dan konfirmasikan kembali.",
+  "premiumRecurringUnavailable": "Kami tidak dapat memulai pembayaran. Silakan coba lagi.\n"
 }
