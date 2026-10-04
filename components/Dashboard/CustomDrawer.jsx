@@ -579,9 +579,18 @@ export default function CustomDrawer(props) {
                   sx={{ color: "white" }}
                 />
               </ListItemButton>
-              {/* Temporar ascuns până la lansarea funcționalității ebookuri.
-              <ListItemButton onClick={() => handleSelectedItem({screen:"ebooks",text:"Ebookuri"})}><ListItemIcon><LibraryBooksIcon /></ListItemIcon><ListItemText primary="Ebookuri" sx={{color:"white"}} /></ListItemButton>
-              */}
+              <ListItemButton
+                onClick={() =>
+                  handleSelectedItem({ screen: "ebooks", text: "Ebookuri" })
+                }
+              >
+                <ListItemIcon
+                  sx={{ color: selectedItem === "Ebookuri" ? "#ffc045" : "white" }}
+                >
+                  <LibraryBooksIcon />
+                </ListItemIcon>
+                <ListItemText primary="Ebookuri" sx={{ color: "white" }} />
+              </ListItemButton>
               <ListItemButton
                 onClick={() =>
                   handleSelectedItem({

@@ -29,6 +29,10 @@ Cleanup-ul păstrează generația activă și precedenta și verifică manifestu
 - Înainte: categoria „TAROT HOROSCOP 2026 PE ZODII” avea 51 documente publicate în sursă, API-ul returna 1. Manifestul declara 340 rânduri, bucățile erau incomplete.
 - Inventarul sursei la reconstruire: 353 videoclipuri publicate, în 10 categorii cu conținut. Categoriile fără videoclipuri eligibile nu primesc conținut inventat.
 - Prima reconstruire live a publicat o generație verificată cu 353 videoclipuri / 27 bucăți. API-ul categoriei a returnat 50 din 51, cu cursor și `hasMore:true`.
-- Catalogul general poate păstra răspunsul vechi până la expirarea cache-ului CDN (300 secunde). Aplicația mai poate folosi cache-ul local la o eroare de rețea.
+- Codul vechi al catalogului general poate păstra răspunsul CDN 300 secunde și îl poate servi încă 600 secunde în timpul revalidării. Remedierea păstrează cele 300 secunde de cache partajat, dar elimină cele 600 secunde suplimentare de răspuns vechi. Aplicația mai poate folosi cache-ul local la o eroare de rețea.
 - Remedierea permanentă din cod necesită deployment Next.js. Reconstruirea datelor nu actualizează codul Vercel; writerul vechi trebuie înlocuit prin deployment pentru a preveni repetarea.
 - Sintaxa modulelor modificate a fost verificată. Nu s-au adăugat sau rulat teste automate, nu s-a făcut build/deployment și nu s-a verificat pe dispozitiv în această intervenție.
+
+- Verificare live după reconstruire: catalogul general cerut cu URL necache-uit returnează 353 videoclipuri / 10 categorii. Categoria zodii: prima pagină 50 din 51; pagina următoare 1, fără alte pagini. URL-ul vechi poate servi încă răspunsul CDN anterior până la expirare/redeployment.
+
+- Confirmare finală pe URL-ul exact folosit de aplicație (`locale=ro&appPlatform=android`, fără parametru de diagnostic): 353 videoclipuri, 10 categorii; CDN-ul servește acum răspunsul complet. Categoria zodii include 51. Generația finală verificată: `fa90b1ed-43ba-49d2-a38b-a2134e399910`, 27 bucăți, cu semnătura sursei.

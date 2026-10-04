@@ -160,8 +160,9 @@ async function handler(req, res) {
         nowMs,
         nextPublishAtMs: nextVideoTransitionAtMs,
         maxAgeSeconds: 300,
-        staleWhileRevalidateSeconds:
-          nextVideoTransitionAtMs != null ? 0 : 600,
+        // Keep the five-minute shared cache, but never serve an extra ten
+        // minutes of obsolete catalog while revalidating after publication.
+        staleWhileRevalidateSeconds: 0,
       });
     }
 

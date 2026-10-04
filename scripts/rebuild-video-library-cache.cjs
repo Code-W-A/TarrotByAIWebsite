@@ -16,9 +16,9 @@ async function pruneGenerations(db) {
   for (let offset = 0; offset < refs.length; offset += 100) {
     deleted += await db.runTransaction(async tx => {
       const snap = await tx.get(manifestRef);
-      if (!snap.exists) throw new Error('No active catalog; refusing cleanup.');
+      if (!snap.exists || !cache.validateManifestHeader(snap.data())) throw new Error('No valid active catalog; refusing cleanup.');
       const manifest = snap.data();
-      const protectedIds = new Set([...manifest.chunkDocIds || [], ...manifest.previousManifest?.chunkDocIds || []]);
+      const protectedIds = new Set([...(manifest.chunkDocIds || []), ...(manifest.previousManifest?.chunkDocIds || [])]);
       const expired = refs.slice(offset, offset + 100).filter(ref => !protectedIds.has(ref.id));
       expired.forEach(ref => tx.delete(ref));
       return expired.length;
