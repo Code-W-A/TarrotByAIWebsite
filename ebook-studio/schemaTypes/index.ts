@@ -1,33 +1,7 @@
 import { defineType, defineField } from "sanity";
-export const languages = [
-  "ro",
-  "en",
-  "es",
-  "fr",
-  "de",
-  "it",
-  "pt",
-  "ru",
-  "bg",
-  "cs",
-  "sk",
-  "pl",
-  "tr",
-  "el",
-  "ar",
-  "he",
-  "hi",
-  "bs",
-  "hr",
-  "hu",
-  "id",
-  "ja",
-  "ko",
-  "mn",
-  "sq",
-  "sr",
-  "zh",
-].map((id) => ({ id, title: id.toUpperCase() }));
+import { languages } from "./languages";
+import { EbookBookInput } from "../components/EbookBookInput";
+export { languages } from "./languages";
 const link = {
   name: "link",
   type: "object",
@@ -41,6 +15,7 @@ const link = {
 };
 const ebook = defineType({
   name: "ebook",
+  components: { input: EbookBookInput },
   title: "Carte",
   type: "document",
   fields: [
@@ -53,6 +28,7 @@ const ebook = defineType({
     defineField({
       name: "status",
       title: "Stare în catalog",
+      hidden: true,
       type: "string",
       initialValue: "draft",
       options: {

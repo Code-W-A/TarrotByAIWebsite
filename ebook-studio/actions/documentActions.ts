@@ -19,7 +19,7 @@ export function createDeleteBookConfirmation(
 export function getEbookDocumentActions(
   previous: any[],
   context: { schemaType: string },
-  deleteEbookAction: any,
+  _deleteEbookAction: any,
   previewAction: any,
 ) {
   const actions = previous.filter((action) => {
@@ -31,11 +31,9 @@ export function getEbookDocumentActions(
     return true;
   });
 
-  return [
-    ...actions,
-    ...(context.schemaType === "ebook" ? [deleteEbookAction] : []),
-    previewAction,
-  ];
+  // Book operations are visible buttons inside the form, not overflow actions.
+  if (context.schemaType === "ebook") return actions.filter((action) => action.action !== "publish");
+  return [...actions, previewAction];
 }
 
 export async function deleteEbookDocuments(client: any, ebookId: string) {

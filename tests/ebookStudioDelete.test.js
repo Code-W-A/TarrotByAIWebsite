@@ -15,7 +15,7 @@ describe("ebook Studio deletion action", () => {
     { action: "restore" },
   ];
 
-  it("places a named delete action on the book, not its translations", () => {
+  it("uses the visible form panel for book operations and keeps edition publishing", () => {
     const bookActions = getEbookDocumentActions(
       baseActions,
       { schemaType: "ebook" },
@@ -23,10 +23,7 @@ describe("ebook Studio deletion action", () => {
       Preview,
     );
     expect(bookActions).toEqual([
-      baseActions[0],
       baseActions[4],
-      DeleteEbook,
-      Preview,
     ]);
 
     const editionActions = getEbookDocumentActions(
