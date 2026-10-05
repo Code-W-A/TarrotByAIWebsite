@@ -140,3 +140,7 @@ API: `POST /api/ebooks/:ebookId/redeem`, Bearer Firebase, `{ code }`. Codul este
 În regulile Firestore de producție trebuie păstrat accesul exclusiv prin Admin SDK pentru `ebookAccess`, `ebookProgress` și `ebookPromoAttempts`. Fișierul local `expo-mobile-app/firestore.rules` include regula pentru noul contor. Verifică să nu existe alte reguli generale care permit scrierea acestor căi; regulile Firestore se cumulează. Nu se face deployment automat al regulilor.
 
 Validarea locală cu API-uri simulate nu dovedește sincronizarea live. După redeploy și publicarea aplicației, verifică același cont real în ambele direcții (web → mobil, mobil → web), traducerile și progresul.
+
+## Ștergerea unei cărți
+
+În editorul cărții, deschide acțiunea **„Șterge cartea”** din bara de acțiuni de lângă Publish și confirmă ștergerea definitivă. Acțiunea elimină documentul cărții și toate edițiile publicate și draft asociate. Cumpărătorii nu vor mai putea citi conținutul șters, de aceea arhivează cartea dacă dorești doar să o scoți din catalog. Înregistrările de plată și acces din Firebase, precum și fișierele din biblioteca media Sanity, rămân păstrate.

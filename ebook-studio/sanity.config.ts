@@ -1,6 +1,8 @@
 import { defineConfig } from "sanity";
 import { structureTool } from "sanity/structure";
 import { schemas, languages } from "./schemaTypes";
+import { DeleteEbookAction } from "./actions/deleteEbook";
+import { getEbookDocumentActions } from "./actions/documentActions";
 function PreviewAction(props: any) {
   const doc = props.draft || props.published;
   const bookId =
@@ -92,17 +94,7 @@ export default defineConfig({
     ],
   },
   document: {
-    actions: (prev, context) => [
-      ...prev.filter((action) => {
-        // Published content is retained for existing purchasers. Archive the root book.
-        if (
-          ["ebook", "ebookEdition"].includes(context.schemaType) &&
-          ["delete", "unpublish", "duplicate"].includes(action.action || "")
-        )
-          return false;
-        return true;
-      }),
-      PreviewAction,
-    ],
+    actions: (prev, context) =>
+      getEbookDocumentActions(prev, context, DeleteEbookAction, PreviewAction),
   },
 });
