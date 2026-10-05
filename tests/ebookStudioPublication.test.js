@@ -9,6 +9,26 @@ function mockClient(documents) {
 }
 const validate = jest.fn(async doc => doc.invalid ? [{ level: "error", path: ["chapters"], message: "Required" }] : []);
 
+it("treats an untouched new form as incomplete rather than a saving error, without creating it", async () => {
+  const client = mockClient([]);
+  const schemaValidate = jest.fn(async doc => !doc.adminTitle ? [{ level: "error", path: ["adminTitle"], message: "Required" }] : []);
+  const state = await inspectPublication(client, "new-book", ["ro", "en"], schemaValidate);
+  expect(state.persisted).toBe(false);
+  expect(state.canPublish).toBe(false);
+  expect(state.bookErrors[0].path).toEqual(["adminTitle"]);
+  expect(client.transaction).not.toHaveBeenCalled();
+  expect(client.action).not.toHaveBeenCalled();
+});
+
+it("picks up the first saved draft on reinspection, including its new field values", async () => {
+  const client = mockClient([]);
+  expect((await inspectPublication(client, "book", ["ro"], validate)).persisted).toBe(false);
+  client.fetch.mockResolvedValueOnce([book(), edition("ro")]);
+  const saved = await inspectPublication(client, "book", ["ro"], validate);
+  expect(saved.persisted).toBe(true);
+  expect(saved.canPublish).toBe(true);
+});
+
 it("validates the current root and each edition, requiring RO and skipping invalid translations", async () => {
   const client = mockClient([book(), edition("ro"), edition("en"), { ...edition("fr"), invalid: true }]);
   const plan = await inspectPublication(client, "drafts.book", ["ro", "en", "fr", "de"], validate);

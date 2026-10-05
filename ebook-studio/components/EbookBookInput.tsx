@@ -25,6 +25,7 @@ function BookPublicationInput(props: ObjectInputProps) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState("");
   const [dialog, setDialog] = useState<"archive" | "delete" | null>(null);
   const [deleted, setDeleted] = useState(false);
   const generation = useRef(0);
@@ -37,15 +38,21 @@ function BookPublicationInput(props: ObjectInputProps) {
     getDocumentExists: async ({ id: referenceId }) => referenceId === bookId ||
       Boolean(await client.withConfig({ perspective: "published" }).fetch('count(*[_id==$id]) > 0', { id: referenceId })),
   }), [workspace, currentUser, client]);
-  const inspect = useCallback(() => inspectPublication(client, id, languages.map(l => l.id), validate), [client, id, validate]);
+  const inspect = useCallback((includeLocal = false) => inspectPublication(client, id, languages.map(l => l.id), validate,
+    includeLocal ? valueRef.current : undefined), [client, id, validate]);
   const refresh = useCallback(async () => {
     const version = ++generation.current;
     setLoading(true);
-    try { const next = await inspect(); if (version === generation.current) setInspection(next); }
-    catch (e) { if (version === generation.current) setError(e instanceof Error ? e.message : "Nu putem încărca starea publicării."); }
+    try { const next = await inspect(true); if (version === generation.current) { setInspection(next); setLoadError(""); } }
+    catch (e) { if (version === generation.current) setLoadError(e instanceof Error ? e.message : "Nu putem încărca starea publicării."); }
     finally { if (version === generation.current) setLoading(false); }
   }, [inspect]);
-  useEffect(() => { if (id) void refresh(); else setLoading(false); return () => { generation.current++; }; }, [id, props.value?._rev, refresh]);
+  const formContent = editableContent(props.value);
+  useEffect(() => {
+    const timer = id ? setTimeout(() => void refresh(), 400) : undefined;
+    if (!id) setLoading(false);
+    return () => { clearTimeout(timer); generation.current++; };
+  }, [id, props.value?._rev, formContent, refresh]);
 
   async function run(operation: "publish" | "archive" | "delete") {
     if (running.current || props.readOnly) return;
@@ -92,15 +99,18 @@ function BookPublicationInput(props: ObjectInputProps) {
         <Flex gap={3} wrap="wrap">
           <Button text={published?.status === "published" ? "Actualizează cartea" : "Publică cartea"} tone="positive"
             disabled={disabled || !inspection?.canPublish} loading={busy} onClick={() => void run("publish")} />
-          <Button text="Previzualizează" mode="ghost" disabled={busy || !id || deleted}
+          <Button text="Previzualizează" mode="ghost" disabled={busy || !inspection?.persisted || deleted}
             onClick={() => window.open(`/ebooks/${encodeURIComponent(id)}/read?preview=1&locale=ro`, "_blank", "noopener")} />
           <Button text="Arhivează cartea" mode="ghost" disabled={disabled || !published || published.status === "archived" || !!inspection?.bookErrors.length}
             onClick={() => setDialog("archive")} />
-          <Button text="Șterge cartea" tone="critical" mode="ghost" disabled={disabled} onClick={() => setDialog("delete")} />
+          <Button text="Șterge cartea" tone="critical" mode="ghost" disabled={disabled || !inspection?.persisted} onClick={() => setDialog("delete")} />
           <Button text="Reverifică" mode="bleed" disabled={busy || loading || deleted || !id} onClick={() => { setError(""); void refresh(); }} />
         </Flex>
         {loading && <Flex gap={2} align="center"><Spinner /><Text size={1}>Se verifică edițiile…</Text></Flex>}
         {inspection && !deleted && <>
+          {!inspection.persisted && <Card padding={3} radius={2} tone="primary"><Text size={1}>
+            Carte nouă: completează titlul, coperta și prețul de mai jos, apoi adaugă capitolele în RO. Modificările se salvează automat.
+          </Text></Card>}
           <Text size={1} weight="semibold">La apăsare: cartea și {inspection.candidates.length} ediții noi sau modificate.</Text>
           <details><summary style={{ cursor: "pointer", fontSize: 14 }}>Vezi starea limbilor ({inspection.editions.filter((e: any) => e.valid).length} complete / {inspection.editions.length})</summary>
           <Box marginTop={3}><Flex gap={2} wrap="wrap">{inspection.editions.map((e: any) => <Badge key={e.language}
@@ -115,7 +125,7 @@ function BookPublicationInput(props: ObjectInputProps) {
             <Text size={1} key={e.language}>{e.language.toUpperCase()} rămâne draft: {validationText(e.errors)}</Text>)}
         </>}
         {!!message && <Card padding={3} radius={2} tone={busy ? "primary" : "positive"}><Text size={1} role="status">{message}</Text></Card>}
-        {!!error && <Card padding={3} radius={2} tone="critical"><Text size={1} role="alert">{error}</Text></Card>}
+        {!!(error || loadError) && <Card padding={3} radius={2} tone="critical"><Text size={1} role="alert">{error || loadError}</Text></Card>}
       </Stack>
     </Card>
     {!deleted && props.renderDefault({ ...props, readOnly: Boolean(props.readOnly) || busy })}

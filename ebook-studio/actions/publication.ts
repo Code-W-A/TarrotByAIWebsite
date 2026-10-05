@@ -9,7 +9,7 @@ export function editableContent(doc: any) {
 }
 const errors = (markers: any[]) => markers.filter((m) => m.level === "error");
 
-export async function inspectPublication(client: any, id: string, languages: string[], validate: Validate) {
+export async function inspectPublication(client: any, id: string, languages: string[], validate: Validate, localBook?: any) {
   const bookId = canonical(id);
   const docs: any[] = await client.fetch(
     '*[_id in $bookIds || (_type == "ebookEdition" && book._ref == $bookId)]',
@@ -17,8 +17,10 @@ export async function inspectPublication(client: any, id: string, languages: str
   );
   const published = docs.find((d) => d._id === bookId);
   const draft = docs.find((d) => d._id === `drafts.${bookId}`);
-  const book = draft || published;
-  if (!book) throw new Error("Cartea încă se salvează. Așteaptă câteva secunde și reîncearcă.");
+  const persisted = Boolean(draft || published);
+  // A new, untouched form has an ID but is not stored until the first edit.
+  // Validate it for guidance without creating or publishing any document.
+  const book = draft || published || { _id: `drafts.${bookId}`, _type: "ebook", currency: "RON", ...localBook };
   const bookErrors = errors(await validate({ ...book, status: "published" }, bookId));
   const editions = await Promise.all(languages.map(async (language) => {
     const editionId = `edition-${bookId}-${language}`;
@@ -30,8 +32,8 @@ export async function inspectPublication(client: any, id: string, languages: str
       valid: Boolean(document) && validation.length === 0 };
   }));
   const romanian = editions.find((e) => e.language === "ro");
-  return { bookId, book, draft, published, bookErrors, editions,
-    canPublish: bookErrors.length === 0 && Boolean(romanian?.valid),
+  return { bookId, book, draft, published, persisted, bookErrors, editions,
+    canPublish: persisted && bookErrors.length === 0 && Boolean(romanian?.valid),
     candidates: editions.filter((e) => e.valid && e.draft),
   };
 }
