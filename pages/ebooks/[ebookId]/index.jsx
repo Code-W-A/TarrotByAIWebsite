@@ -28,6 +28,7 @@ export default function EbookDetail() {
   const userRef = useRef(currentUser);
   userRef.current = currentUser;
   const customer = Boolean(currentUser && !currentUser.isAnonymous);
+  const purchaseIntentHandled = useRef("");
   function login() {
     const returnUrl = `${router.locale && router.locale !== "ro" ? "/" + router.locale : ""}${router.asPath}`;
     router.push({ pathname: "/login/videoteca", query: { returnUrl } });
@@ -105,6 +106,14 @@ export default function EbookDetail() {
       generation.current++;
     };
   }, [ebookId, router.locale, currentUser?.uid, currentUser?.isAnonymous]);
+  useEffect(() => {
+    if (router.query.buy !== "1" || !book || book.id !== ebookId || book.owned || !billingEnabled) return;
+    const key = `${ebookId}:${router.locale}:${customer ? currentUser.uid : "guest"}`;
+    if (purchaseIntentHandled.current === key) return;
+    purchaseIntentHandled.current = key;
+    if (!customer) login();
+    else setBillingOpen(true);
+  }, [router.query.buy, ebookId, router.locale, book?.id, book?.owned, billingEnabled, customer, currentUser?.uid]);
   useEffect(() => {
     if (checkout !== "success" || !currentUser || !ebookId) return;
     let active = true;

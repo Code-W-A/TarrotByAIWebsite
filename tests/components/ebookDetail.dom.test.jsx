@@ -2,11 +2,12 @@
 import React, { act } from "react";
 import { createRoot } from "react-dom/client";
 let mockUser;
+let mockBuy;
 const mockPush = jest.fn();
 jest.mock("next/router", () => ({
   useRouter: () => ({
-    query: { ebookId: "book" },
-    asPath: "/ebooks/book",
+    query: { ebookId: "book", buy: mockBuy },
+    asPath: mockBuy ? "/ebooks/book?buy=1" : "/ebooks/book",
     locale: "ro",
     push: mockPush,
   }),
@@ -72,6 +73,7 @@ beforeEach(() => {
   global.IS_REACT_ACT_ENVIRONMENT = true;
   jest.clearAllMocks();
   mockUser = { uid: "alice" };
+  mockBuy = undefined;
   ebookRequest.mockImplementation(async (path) =>
     path === "/config"
       ? { enabled: true, websiteBilling: true, promoEnabled: true }
@@ -174,4 +176,25 @@ it("ignores an ownership response started before the promo grant", async () => {
   await act(async () => window.dispatchEvent(new Event("focus")));
   await code(); await submit(); await act(async () => resolve({ ...book, owned: false }));
   expect(container.querySelector('a[href$="/read"]')).toBeTruthy();
+});
+
+it("opens billing from the store buy link without initiating checkout", async () => {
+  mockBuy = "1";
+  await render();
+  expect(container.textContent).toContain("Formular facturare");
+  expect(ebookRequest.mock.calls.some(([path]) => path.includes("/checkout"))).toBe(false);
+});
+it("preserves the store buy intent through login", async () => {
+  mockUser = null;
+  mockBuy = "1";
+  await render();
+  expect(mockPush).toHaveBeenCalledWith({ pathname: "/login/videoteca", query: { returnUrl: "/ebooks/book?buy=1" } });
+  expect(container.textContent).not.toContain("Formular facturare");
+});
+it("keeps already owned books in reader mode instead of opening billing", async () => {
+  mockBuy = "1";
+  ebookRequest.mockImplementation(async path => path === "/config" ? { enabled: true, websiteBilling: true } : { ...book, owned: true });
+  await render();
+  expect(container.querySelector('a[href="/ebooks/book/read"]')).toBeTruthy();
+  expect(container.textContent).not.toContain("Formular facturare");
 });
