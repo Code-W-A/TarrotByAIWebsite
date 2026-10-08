@@ -1,3 +1,4 @@
+jest.mock("../../lib/ebooks/native", () => ({ nativeEbookAvailability: jest.fn(() => ({ios: true, android: true})), confirmNativeEbook: jest.fn(async () => ({confirmed: true, owned: true})), restoreNativeEbooks: jest.fn(async () => ({restored: 1})) }));
 jest.mock("../../lib/ebooks/promo", () => ({
   ...jest.requireActual("../../lib/ebooks/promo"),
   redeemPromo: jest.fn(),
@@ -44,6 +45,7 @@ import handler from "../../pages/api/ebooks/[[...path]]";
 import { requireAuth, requireDashboardAccess } from "../../lib/requireAuth";
 import { requireEbookAccess } from "../../lib/ebooks/access";
 import { readChapter, metadata } from "../../lib/ebooks/content";
+import { checkout } from "../../lib/ebooks/billing";
 async function request(path, method = "GET", body = {}) {
   const req = {
     query: { path: path.split("/").filter(Boolean), locale: "es" },
@@ -74,6 +76,7 @@ beforeEach(() => {
   process.env.SANITY_PROJECT_ID = "test";
   process.env.SANITY_DATASET = "production";
   process.env.SANITY_READ_TOKEN = "test";
+  metadata.mockResolvedValue({ id: "book", status: "published" });
   requireAuth.mockResolvedValue({ uid: "alice" });
   requireEbookAccess.mockResolvedValue();
 });
@@ -91,6 +94,24 @@ it("denies chapter access without purchase", async () => {
   );
   const r = await request("book/chapters/c1");
   expect(r.code).toBe(403);
+  expect(readChapter).not.toHaveBeenCalled();
+});
+it.each([
+  ["checkout", "POST"],
+  ["redeem", "POST"],
+  ["chapters/c1", "GET"],
+  ["progress", "GET"],
+  ["progress", "PUT"],
+  ["purchased", "GET"],
+])("rejects visitors and anonymous tokens for %s", async (action, method) => {
+  for (const user of [null, {}, { uid: "anon", isAnonymous: true }, { uid: "anon", firebase: { sign_in_provider: "anonymous" } }]) {
+    requireAuth.mockResolvedValue(user);
+    const r = await request(action === "purchased" ? action : `book/${action}`, method, { code: "example" });
+    expect(r.code).toBe(401);
+  }
+  expect(checkout).not.toHaveBeenCalled();
+  expect(redeemPromo).not.toHaveBeenCalled();
+  expect(requireEbookAccess).not.toHaveBeenCalled();
   expect(readChapter).not.toHaveBeenCalled();
 });
 it("uses authenticated UID, not a supplied UID", async () => {
@@ -147,6 +168,8 @@ it("redeems only authenticated UID after validating a published book", async () 
   expect(r.payload).toEqual({ owned: true });
 });
 it.each([
+  "book/native-confirm",
+  "native-restore",
   "book/redeem",
   "book/checkout",
   "book/chapters/c1",
@@ -157,7 +180,7 @@ it.each([
     uid: "anon",
     firebase: { sign_in_provider: "anonymous" },
   });
-  const r = await request(path, /redeem|checkout/.test(path) ? "POST" : "GET", {
+  const r = await request(path, /redeem|checkout|native/.test(path) ? "POST" : "GET", {
     code: "example",
   });
   expect(r.code).toBe(401);
@@ -182,4 +205,13 @@ it("config exposes only promo availability", async () => {
   expect((await request("config")).payload.promoEnabled).toBe(false);
   delete process.env.EBOOK_PROMO_ENABLED;
   delete process.env.EBOOK_PROMO_CODE_HASH;
+});
+
+import { confirmNativeEbook, restoreNativeEbooks } from "../../lib/ebooks/native";
+it("confirms and restores only the authenticated account", async () => {
+  const body = { platform: "ios", productId: "book.ios", transactionId: "tx", uid: "bob" };
+  expect((await request("book/native-confirm", "POST", body)).payload.owned).toBe(true);
+  expect(confirmNativeEbook).toHaveBeenCalledWith({}, {uid: "alice"}, "book", body);
+  expect((await request("native-restore", "POST", body)).payload.restored).toBe(1);
+  expect(restoreNativeEbooks).toHaveBeenCalledWith({}, {uid: "alice"}, "ios");
 });

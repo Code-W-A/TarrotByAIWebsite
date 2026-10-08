@@ -8,7 +8,6 @@ import { emitPremiumSubscriptionOblioInvoice } from "../../../../lib/premiumSubs
 import { resolvePremiumAbonamentWebhookSecret } from "../../../../lib/stripePremiumEnv";
 import { getFixedVatTaxRateId } from "../../../../lib/stripeFixedVatServer";
 import {
-  syncPremiumSubscription,
   syncPremiumSubscriptionById,
 } from "../../../../lib/stripePremiumSubscriptionSync";
 import {
@@ -178,19 +177,10 @@ export default async function handler(req, res) {
       case "customer.subscription.deleted": {
         const sub = event.data.object;
         await linkSubscriptionConsent(db, sub.metadata?.subscriptionConsentId, { stripeSubscriptionId: sub.id, subscriptionStatus: sub.status }, event);
-        try {
-          await syncPremiumSubscriptionById(stripe, sub.id, {
-            eventTimestampMs: event.created * 1000,
-          });
-        } catch (retrieveError) {
-          console.warn("[premium.webhook] current subscription retrieval failed", {
-            subscriptionId: sub.id,
-            message: retrieveError?.message,
-          });
-          await syncPremiumSubscription(sub, {
-            eventTimestampMs: event.created * 1000,
-          });
-        }
+        // Let Stripe retry if the complete account snapshot cannot be retrieved.
+        // Falling back to one event can incorrectly revoke access from another subscription.
+        await syncPremiumSubscriptionById(stripe, sub.id);
+
         break;
       }
       case "invoice.payment_succeeded":

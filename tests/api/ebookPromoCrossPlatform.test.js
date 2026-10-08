@@ -177,3 +177,24 @@ it("rejects unauthenticated redemption and does not create a grant", async () =>
   ).toBe(401);
   expect(getAdminDb().data.size).toBe(0);
 });
+
+it("Stripe ebook access is readable on Android and iOS through the common account", async () => {
+  const { recordPayment } = require("../../lib/ebooks/access");
+  await recordPayment(getAdminDb(), {eventId:"stripe-web",sourceId:"stripe:checkout",uid:"alice",ebookId:"book",provider:"stripe",status:"paid",revision:1});
+  for (const platform of ["android", "ios"]) {
+    expect((await request("book/chapters/first", "alice", platform)).code).toBe(200);
+    expect((await request("book/chapters/first", "bob", platform)).code).toBe(403);
+    expect((await request("purchased", "alice", platform)).payload.books).toHaveLength(1);
+  }
+});
+
+it("native universal credit unlocks web reading and translations on the same account", async () => {
+  const { recordEbookCredit, spendEbookCredit, creditIdFor } = require("../../lib/ebooks/credits");
+  const db = getAdminDb();
+  await recordEbookCredit(db, {uid:"alice",platform:"ios",transactionId:"store-1",status:"paid",revision:1,eventId:"native"});
+  expect((await request("book/chapters/first", "alice", "web")).code).toBe(403);
+  await spendEbookCredit(db, {uid:"alice"}, "book", creditIdFor("ios", "store-1"));
+  expect((await request("book/chapters/first", "alice", "web", "GET", {}, "es")).payload.language).toBe("es");
+  expect((await request("purchased", "alice", "web")).payload.books).toHaveLength(1);
+  expect((await request("book/chapters/first", "bob", "web")).code).toBe(403);
+});

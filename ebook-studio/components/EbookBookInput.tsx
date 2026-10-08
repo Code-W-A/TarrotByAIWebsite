@@ -128,6 +128,7 @@ function BookPublicationInput(props: ObjectInputProps) {
         {!!(error || loadError) && <Card padding={3} radius={2} tone="critical"><Text size={1} role="alert">{error || loadError}</Text></Card>}
       </Stack>
     </Card>
+    {!deleted && <Card padding={3} marginBottom={3} tone="primary"><Text size={1}>Preț fix: 11 EUR + TVA. Prețurile finale pentru iOS și Android se configurează în magazine, în „Achiziții mobile”.</Text></Card>}
     {!deleted && props.renderDefault({ ...props, readOnly: Boolean(props.readOnly) || busy })}
     {dialog && <Dialog id={`ebook-${dialog}`} header={dialog === "delete" ? "Șterge cartea definitiv" : "Arhivează cartea"}
       onClose={() => setDialog(null)} width={1}>

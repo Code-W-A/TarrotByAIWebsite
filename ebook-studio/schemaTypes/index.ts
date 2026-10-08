@@ -18,6 +18,7 @@ const ebook = defineType({
   components: { input: EbookBookInput },
   title: "Carte",
   type: "document",
+
   fields: [
     defineField({
       name: "adminTitle",
@@ -53,18 +54,18 @@ const ebook = defineType({
     }),
     defineField({
       name: "price",
-      title: "Preț net (aceeași convenție ca la cursuri)",
+      hidden: true,
       type: "number",
-      validation: (r) => r.required().positive(),
     }),
     defineField({
       name: "currency",
-      title: "Monedă",
+      hidden: true,
       type: "string",
-      initialValue: "RON",
-      options: { list: ["RON", "EUR", "USD"] },
-      validation: (r) => r.required(),
+      initialValue: "EUR",
     }),
+    ...["appleProductId", "googleProductId"].map((name) => defineField({
+      name, type: "string", hidden: true, readOnly: true,
+    })),
   ],
 });
 const ebookEdition = defineType({

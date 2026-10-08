@@ -471,11 +471,12 @@ export default async function handler(req, res) {
     metadata.invoiceDeliveryInRomania = String(billingAudit.normalizedClient.deliveryInRomania);
     metadata.invoiceEligibleForEInvoice = String(billingAudit.normalizedClient.eligibleForEInvoice);
 
-    // Mobile (Expo WebView): seed a one-off Customer with app billing address so
-    // Stripe Automatic Tax has a location. Web keeps customer_email-only behavior.
+    // Mobile: reuse the purchase Customer with app billing details.
+    // Web keeps customer_email-only behavior.
     // Never writes Users.stripeCustomerId — avoids Premium tax-address side effects.
     const taxCustomerFields = await resolveCourseCheckoutTaxCustomerFields({
       stripe,
+      db,
       sourcePlatform,
       isMobilePlatform,
       billingDetails,
@@ -487,8 +488,8 @@ export default async function handler(req, res) {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
-      billing_address_collection: "required",
-      phone_number_collection: { enabled: true },
+      billing_address_collection: isMobilePlatform(sourcePlatform) ? "auto" : "required",
+      phone_number_collection: { enabled: !isMobilePlatform(sourcePlatform) },
       line_items: [
         {
           price_data: {

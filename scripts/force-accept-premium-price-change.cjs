@@ -1,19 +1,7 @@
 #!/usr/bin/env node
 /* eslint-disable no-console */
 
-/**
- * Reverses `migrate-premium-subscriptions-tax.cjs --schedule-cancel-unaccepted`
- * for subscribers who never answered the 5 EUR -> 6.05 EUR notice.
- *
- * Only touches subscriptions whose cancellation was scheduled by that operation
- * (`metadata.priceChangeCancelReason === "unaccepted_v1_6_05"`), so genuine
- * user-initiated cancellations are left alone. For each one it clears the
- * scheduled cancellation and records the same forced consent marker the earlier
- * ops migration used, keeping both cohorts consistent.
- *
- * Dry run:  node scripts/force-accept-premium-price-change.cjs --live
- * Apply:    node scripts/force-accept-premium-price-change.cjs --live --apply --confirm=FORCE_ACCEPT_UNACCEPTED_605
- */
+/** Legacy read-only audit. Bulk reactivation is disabled; owners reactivate in Settings. */
 
 const path = require("path");
 const dotenv = require("dotenv");
@@ -25,16 +13,10 @@ dotenv.config({ path: path.join(process.cwd(), ".env") });
 
 const LIVE = process.argv.includes("--live");
 const APPLY = process.argv.includes("--apply");
-const CONFIRMATION = "FORCE_ACCEPT_UNACCEPTED_605";
-const confirmArg = process.argv.find((a) => a.startsWith("--confirm="));
-const confirmation = confirmArg ? confirmArg.slice("--confirm=".length).trim() : "";
 
 const PAYING_STATUSES = new Set(["active", "trialing", "past_due"]);
 const CANCEL_REASON = "unaccepted_v1_6_05";
-const CONSENT_VERSION = "v1_6_05";
-const FORCED_SOURCE = "forced_ops_v1";
 const OLD_TOTAL_CENTS = 500;
-const NEW_TOTAL_CENTS = 605;
 const EXPECTED_VAT_PERCENTAGE = 21;
 
 function clean(value) {
@@ -105,13 +87,12 @@ async function findUid(db, subscription) {
 }
 
 async function main() {
+  if (APPLY) throw new Error("Bulk reactivation is disabled. The account owner must explicitly reactivate one subscription in Settings.");
   const secretKey = LIVE
     ? clean(process.env.STRIPE_SECRET_KEY_LIVE)
     : clean(process.env.STRIPE_SECRET_KEY);
   if (!secretKey) throw new Error("Missing Stripe secret key");
-  if (APPLY && confirmation !== CONFIRMATION) {
-    throw new Error(`Apply requires --confirm=${CONFIRMATION}`);
-  }
+
 
   const exclusivePriceId = clean(process.env.STRIPE_PREMIUM_PRICE_ID_EXCLUSIVE);
   if (!exclusivePriceId) throw new Error("Missing STRIPE_PREMIUM_PRICE_ID_EXCLUSIVE");
@@ -151,86 +132,13 @@ async function main() {
     summary.eligible += 1;
     const renewalAt = isoDay(sub.current_period_end);
 
-    if (!APPLY) {
-      console.log("[force-accept] eligible", {
-        subscriptionId: maskId(sub.id),
-        uid: maskId(uid),
-        renewalAt,
-        platform: clean(sub.metadata?.platform) || "web",
-        alreadyConsented: Boolean(userData?.premiumPriceChangeConsent?.acceptedAt),
-      });
-      continue;
-    }
-
-    try {
-      await stripe.subscriptions.update(
-        sub.id,
-        {
-          cancel_at_period_end: false,
-          metadata: {
-            ...(sub.metadata || {}),
-            priceChangeCancelReason: "",
-            priceChangeConsentVersion: CONSENT_VERSION,
-            priceChangeConsentSource: FORCED_SOURCE,
-          },
-        },
-        { idempotencyKey: `premium-force-accept-605-v1-${sub.id}` }
-      );
-
-      const updated = await stripe.subscriptions.retrieve(sub.id);
-      if (updated.cancel_at_period_end !== false) {
-        throw new Error("post_update_cancel_at_period_end_still_true");
-      }
-      if (billingBlockers(updated, exclusivePriceId).length) {
-        throw new Error("post_update_billing_validation_failed");
-      }
-
-      await db
-        .collection("Users")
-        .doc(uid)
-        .set(
-          {
-            premiumSubscriptionCancelAtPeriodEnd: false,
-            premiumPriceChangeConsent: {
-              version: CONSENT_VERSION,
-              status: "accepted",
-              source: FORCED_SOURCE,
-              consentText:
-                "Migrare operațională la prețul 5 EUR + TVA (6,05 EUR pentru România / TVA 21%).",
-              oldTotalCents: OLD_TOTAL_CENTS,
-              newTotalCents: NEW_TOTAL_CENTS,
-              oldPriceId: exclusivePriceId,
-              newPriceId: exclusivePriceId,
-              subscriptionId: sub.id,
-              renewalAt,
-              uid,
-              acceptedAt: admin.firestore.FieldValue.serverTimestamp(),
-              noticeVersion: CONSENT_VERSION,
-            },
-            premiumTaxAddressGate: {
-              ...(userData?.premiumTaxAddressGate || {}),
-              required: false,
-              readyForMigration: false,
-              migrationCompleted: true,
-              version: 1,
-            },
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          },
-          { merge: true }
-        );
-
-      summary.restored += 1;
-      console.log("[force-accept] restored", {
-        subscriptionId: maskId(sub.id),
-        renewalAt,
-      });
-    } catch (error) {
-      summary.failed += 1;
-      console.error("[force-accept] failed", {
-        subscriptionId: maskId(sub.id),
-        message: clean(error?.message).slice(0, 300),
-      });
-    }
+    console.log("[force-accept] audit_only", {
+      subscriptionId: maskId(sub.id),
+      uid: maskId(uid),
+      renewalAt,
+      platform: clean(sub.metadata?.platform) || "web",
+      alreadyConsented: Boolean(userData?.premiumPriceChangeConsent?.acceptedAt),
+    });
   }
 
   console.log("\nSummary:", summary);

@@ -198,3 +198,13 @@ it("keeps already owned books in reader mode instead of opening billing", async 
   expect(container.querySelector('a[href="/ebooks/book/read"]')).toBeTruthy();
   expect(container.textContent).not.toContain("Formular facturare");
 });
+
+it.each([null, { uid: "anon", isAnonymous: true }])("requires an account before checkout or promo for %j", async (user) => {
+  mockUser = user;
+  await render();
+  await act(async () => button("Cumpără ebookul").click());
+  expect(mockPush).toHaveBeenCalled();
+  expect(container.textContent).not.toContain("Formular facturare");
+  expect(container.querySelector("form")).toBeNull();
+  expect(ebookRequest.mock.calls.some(([p]) => p.includes("checkout") || p.includes("redeem"))).toBe(false);
+});

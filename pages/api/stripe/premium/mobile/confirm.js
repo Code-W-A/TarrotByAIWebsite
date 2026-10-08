@@ -86,7 +86,7 @@ export default async function handler(req, res) {
         return res.status(403).json({ error: "Forbidden" });
       }
 
-      const syncResult = await syncPremiumSubscription(subscription);
+      const syncResult = await syncPremiumSubscription(subscription, { stripe });
       console.log("[premium.mobile.confirm] Subscription sync result", {
         subscriptionId: subscription.id,
         status: subscription.status,
@@ -167,7 +167,7 @@ export default async function handler(req, res) {
           if (subscription.metadata?.uid !== authUser.uid) {
             return res.status(403).json({ error: "Forbidden" });
           }
-          const syncResult = await syncPremiumSubscription(subscription);
+          const syncResult = await syncPremiumSubscription(subscription, { stripe });
           return respondWithSubscription({
             res,
             db,
@@ -191,7 +191,7 @@ export default async function handler(req, res) {
         const subscription = await stripe.subscriptions.retrieve(
           sessionData.stripeSubscriptionId
         );
-        const syncResult = await syncPremiumSubscription(subscription);
+        const syncResult = await syncPremiumSubscription(subscription, { stripe });
         return respondWithSubscription({
           res,
           db,
@@ -273,7 +273,7 @@ export default async function handler(req, res) {
         trial_end: trialEndTimestamp,
       });
 
-      const syncResult = await syncPremiumSubscription(subscription);
+      const syncResult = await syncPremiumSubscription(subscription, { stripe });
 
       await db
         .collection(PREMIUM_MOBILE_SESSION_COLLECTION)
@@ -356,7 +356,7 @@ export default async function handler(req, res) {
           typeof paymentMethodId === "string" ? paymentMethodId : paymentMethodId.id,
       });
 
-      const syncResult = await syncPremiumSubscription(subscription);
+      const syncResult = await syncPremiumSubscription(subscription, { stripe });
 
       await db
         .collection(PREMIUM_MOBILE_SESSION_COLLECTION)

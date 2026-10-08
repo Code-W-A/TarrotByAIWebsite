@@ -67,7 +67,8 @@ export default async function handler(req, res) {
   try {
     let portalSession;
 
-    if (flow === "cancel" && stripeSubscriptionId) {
+    if (flow === "cancel") {
+      if (!stripeSubscriptionId) return res.status(409).json({ error: "Cancellation unavailable. Open subscription settings to verify your subscriptions." });
       try {
         const sub = await stripe.subscriptions.retrieve(stripeSubscriptionId);
         const subCustomer = typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
@@ -80,8 +81,10 @@ export default async function handler(req, res) {
             },
           });
         }
+        if (!portalSession) return res.status(409).json({ error: "Could not verify the subscription for cancellation. Open subscription settings." });
       } catch (subErr) {
         console.warn("[premium.portal] cancel_flow_preflight_failed", { message: subErr?.message });
+        return res.status(503).json({ error: "Cancellation was not completed. Try again from subscription settings." });
       }
     }
 

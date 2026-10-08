@@ -5,6 +5,7 @@ import { useRouter } from "next/router";
 import { useAuth } from "../../../context/AuthContext";
 import PortableText from "../../../components/Ebooks/PortableText";
 import { ebookRequest, ebookText as t } from "../../../components/Ebooks/api";
+import { ebookSectionName } from "../../../components/Ebooks/sectionName";
 import styles from "../../../components/Ebooks/Reader.module.css";
 
 const request = (path, user, options = {}) => ebookRequest(path, user, { ...options, timeoutMs: 20000 });
@@ -48,7 +49,7 @@ export default function EbookReader() {
     setBookStatus("loading"); setChapterStatus("loading"); setMessage("");
     setProgressWarning(false); setTocOpen(false);
     if (!ebookId || (!isPreview && authLoading)) return;
-    if (!isPreview && (!currentUser || currentUser.isAnonymous)) { setBookStatus("login"); return; }
+    if (!isPreview && (!currentUser?.uid || currentUser.isAnonymous)) { setBookStatus("login"); return; }
     (async () => {
       try {
         const b = await request(`${isPreview ? "/preview" : ""}/${ebookId}?locale=${encodeURIComponent(locale)}`, isPreview ? null : currentUser);
@@ -137,7 +138,7 @@ export default function EbookReader() {
   return (
     <main className={styles.root}>
       <header className={styles.header}>
-        <Link href="/ebooks" className={styles.back}>← {ui("Ebookuri", "Ebooks")}</Link>
+        <Link href="/ebooks" className={styles.back}>← {ebookSectionName(router.locale)}</Link>
         <div className={styles.bookHeading}><span className={styles.eyebrow}>{ui("În lectură", "Now reading")}</span><h1>{book?.title || ui("Cititor ebook", "Ebook reader")}</h1></div>
         {book ? <label className={styles.language}>{ui("Limbă", "Language")}<select value={locale} onChange={(e) => setLanguage({ bookId: ebookId, value: e.target.value })}>
           {Array.from(new Set([locale, ...book.availableLanguages])).map((l) => <option key={l} value={l}>{l.toUpperCase()}</option>)}

@@ -6,6 +6,7 @@ import { useAuth } from "../../context/AuthContext";
 import { ebookRequest, ebookText as t } from "./api";
 import EbookLayout from "./Layout";
 import styles from "./Catalog.module.css";
+import { ebookSectionName } from "./sectionName";
 const rtlLanguages = new Set(["ar", "he"]);
 function languageName(language, locale) {
   try { return new Intl.DisplayNames([locale || "ro"], { type: "language" }).of(language); }
@@ -24,7 +25,7 @@ export default function Catalog({ mine = false }) {
   const router = useRouter();
   const locale = router.locale || "ro";
   const { currentUser } = useAuth();
-  const customer = Boolean(currentUser && !currentUser.isAnonymous);
+  const customer = Boolean(currentUser?.uid && !currentUser.isAnonymous);
   const [books, setBooks] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
@@ -55,16 +56,16 @@ export default function Catalog({ mine = false }) {
     <section className={styles.hero} dir={rtlLanguages.has(locale) ? "rtl" : "ltr"}>
       <div className={styles.heroInner}><div>
         <div className={styles.eyebrow}><BookOpen size={16} aria-hidden="true" />{t(locale, "Bibliotecă digitală", "Digital library")}</div>
-        <h1>{mine ? t(locale, "Biblioteca mea", "My library") : t(locale, "Ebookuri", "Ebooks")}</h1>
+        <h1>{mine ? t(locale, "Biblioteca mea", "My library") : ebookSectionName(locale)}</h1>
         <p>{mine ? t(locale, "Cărțile tale, într-un singur loc. Continuă lectura pe site sau în aplicație, cu același cont.", "Your books in one place. Continue reading on the website or in the app with the same account.") : t(locale, "Descoperă cărți despre tarot, astrologie și autocunoaștere. Alege o carte și citește-o online, în limba ta, pe site sau în aplicație.", "Discover books about tarot, astrology and self-discovery. Choose a book and read online in your language, on the website or in the app.")}</p>
       </div><Link className={styles.heroLink} href={mine ? "/ebooks" : "/ebooks/mine"}>
-        <Library size={18} aria-hidden="true" />{mine ? t(locale, "Explorează ebookurile", "Explore ebooks") : t(locale, "Cărțile mele", "My books")}<ArrowRight size={16} aria-hidden="true" />
+        <Library size={18} aria-hidden="true" />{mine ? t(locale, "Vezi catalogul", "View catalog") : t(locale, "Cărțile mele", "My books")}<ArrowRight size={16} aria-hidden="true" />
       </Link></div>
     </section>
     <div className={styles.container} dir={rtlLanguages.has(locale) ? "rtl" : "ltr"}>
       {!loading && !failed && books.length > 0 && <div className={styles.toolbar}>
         <label className={styles.search}><Search size={19} aria-hidden="true" />
-          <input aria-label={t(locale, "Caută în ebookuri", "Search ebooks")} placeholder={t(locale, "Caută după titlu sau descriere…", "Search by title or description…")} value={search} onChange={e => setSearch(e.target.value)} type="search" />
+          <input aria-label={t(locale, "Caută cărți", "Search books")} placeholder={t(locale, "Caută după titlu sau descriere…", "Search by title or description…")} value={search} onChange={e => setSearch(e.target.value)} type="search" />
         </label><label className={styles.select}><Globe2 size={18} aria-hidden="true" />
           <select aria-label={t(locale, "Limbă disponibilă", "Available language")} value={language} onChange={e => setLanguage(e.target.value)}>
             <option value="">{t(locale, "Toate limbile", "All languages")}</option>
@@ -76,10 +77,10 @@ export default function Catalog({ mine = false }) {
       {!loading && (failed || !enabled || empty || noMatches || (mine && !customer)) && <section className={styles.empty} role={failed ? "alert" : "status"}>
         <BookOpen size={38} aria-hidden="true" />
         <h2>{failed ? t(locale, "Biblioteca nu s-a putut încărca", "Unable to load the library") : !enabled ? t(locale, "În curând, aici", "Coming soon") : mine && !customer ? t(locale, "Cărțile tale te așteaptă", "Your books are waiting") : noMatches ? t(locale, "Nicio carte găsită", "No matching books") : mine ? t(locale, "Biblioteca ta începe aici", "Your library starts here") : t(locale, "Pregătim primele cărți", "We are preparing our first books")}</h2>
-        <p>{failed ? message : !enabled ? t(locale, "Ebookurile vor fi disponibile în curând.", "Ebooks will be available soon.") : mine && !customer ? t(locale, "Autentifică-te pentru a vedea cărțile din contul tău.", "Sign in to see the books in your account.") : noMatches ? t(locale, "Încearcă alt titlu sau schimbă limba disponibilă.", "Try another title or available language.") : mine ? t(locale, "Cărțile cumpărate sau activate în cont vor apărea în această bibliotecă.", "Books purchased or activated in your account will appear in this library.") : t(locale, "Revino curând pentru a descoperi ebookurile disponibile.", "Come back soon to explore available ebooks.")}</p>
+        <p>{failed ? message : !enabled ? t(locale, "Cărțile digitale vor fi disponibile în curând.", "Digital books will be available soon.") : mine && !customer ? t(locale, "Autentifică-te pentru a vedea cărțile din contul tău.", "Sign in to see the books in your account.") : noMatches ? t(locale, "Încearcă alt titlu sau schimbă limba disponibilă.", "Try another title or available language.") : mine ? t(locale, "Cărțile cumpărate sau activate în cont vor apărea în această bibliotecă.", "Books purchased or activated in your account will appear in this library.") : t(locale, "Revino curând pentru a descoperi titlurile disponibile.", "Come back soon to explore available titles.")}</p>
         {failed && <button className={styles.secondary} onClick={() => setRetry(v => v + 1)}><RotateCcw size={16} aria-hidden="true" />{t(locale, "Reîncearcă", "Retry")}</button>}
         {mine && !customer && <Link className={styles.primary} href={{ pathname: "/login/videoteca", query: { returnUrl } }}>{t(locale, "Autentifică-te", "Sign in")}</Link>}
-        {mine && customer && empty && <Link href="/ebooks" className={styles.primary}>{t(locale, "Explorează ebookurile", "Explore ebooks")}</Link>}
+        {mine && customer && empty && <Link href="/ebooks" className={styles.primary}>{t(locale, "Vezi catalogul", "View catalog")}</Link>}
         {noMatches && <button className={styles.secondary} onClick={() => { setSearch(""); setLanguage(""); }}>{t(locale, "Resetează filtrele", "Reset filters")}</button>}
       </section>}
       {!loading && !failed && enabled && <div className={styles.grid}>{filtered.map(book => {

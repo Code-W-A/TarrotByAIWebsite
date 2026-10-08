@@ -749,7 +749,6 @@ async function migrateOne(stripe, subscription, item, destinationPriceId, uid, o
       default_tax_rates: [fixedVatTaxRateId],
       billing_cycle_anchor: "unchanged",
       proration_behavior: "none",
-      cancel_at_period_end: false,
       items: [{ id: item.id, price: destinationPriceId, quantity: 1 }],
       metadata: {
         ...(subscription.metadata || {}),
@@ -757,7 +756,6 @@ async function migrateOne(stripe, subscription, item, destinationPriceId, uid, o
         uid,
         taxMigration: PREMIUM_TAX_MIGRATION_METADATA,
         priceChangeConsentVersion: PREMIUM_PRICE_CHANGE_CONSENT_VERSION,
-        priceChangeCancelReason: "",
         ...(forceWithoutConsent
           ? { priceChangeConsentSource: PREMIUM_PRICE_CHANGE_FORCED_SOURCE }
           : {}),

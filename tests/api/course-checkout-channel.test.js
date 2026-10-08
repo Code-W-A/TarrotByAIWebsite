@@ -1,3 +1,5 @@
+jest.mock("../../lib/stripePurchaseCustomer", () => ({ purchaseCustomer: jest.fn(async () => "cus_expo_course") }));
+import { purchaseCustomer } from "../../lib/stripePurchaseCustomer";
 jest.mock("stripe", () => {
   const create = jest.fn();
   const customersCreate = jest.fn();
@@ -303,13 +305,15 @@ describe("course checkout channel enforcement", () => {
     await checkoutHandler(requestFor("expo"), res);
 
     expect(res.statusCode).toBe(200);
-    expect(mockCustomersCreate).toHaveBeenCalledTimes(1);
-    expect(mockCustomersCreate.mock.calls[0][0]).toMatchObject({
+    expect(purchaseCustomer).toHaveBeenCalledTimes(1);
+    expect(purchaseCustomer.mock.calls[0][2]).toBe("user-1");
+    expect(purchaseCustomer.mock.calls[0][3]).toMatchObject({
       address: { country: "RO", line1: "Strada Test 1", city: "Bucuresti" },
-      metadata: { uid: "user-1", source: "courses_checkout" },
     });
-    expect(mockCustomersCreate.mock.calls[0][0].address.postal_code).toBeUndefined();
+    expect(purchaseCustomer.mock.calls[0][3].address.postal_code).toBe("");
     expect(mockStripeCreate.mock.calls[0][0]).toMatchObject({
+      billing_address_collection: "auto",
+      phone_number_collection: { enabled: false },
       customer: "cus_expo_course",
       customer_update: { address: "auto", name: "auto" },
       metadata: { sourcePlatform: "expo" },

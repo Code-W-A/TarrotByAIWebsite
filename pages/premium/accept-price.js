@@ -3,6 +3,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
+import PremiumRenewalControls from "../../components/settings/PremiumRenewalControls";
 import AuthFunnelShell from "../../components/auth/AuthFunnelShell";
 import { useAuth } from "../../context/AuthContext";
 import { getFirebaseBearerHeader } from "../../utils/firebaseAuthHeaders";
@@ -223,7 +224,9 @@ export default function PremiumAcceptPricePage() {
         // Non-blocking: accept already succeeded.
       }
       setMessage(
-        "Confirmarea a fost înregistrată. Abonamentul continuă la 5 EUR + TVA de la următoarea reînnoire."
+        payload.cancelAtPeriodEnd
+          ? "Prețul a fost acceptat. Oprirea reînnoirii rămâne programată."
+          : "Confirmarea a fost înregistrată. Abonamentul continuă la 5 EUR + TVA de la următoarea reînnoire."
       );
     } catch (_) {
       setMessage("Nu am putut salva confirmarea. Încearcă din nou.");
@@ -328,8 +331,8 @@ export default function PremiumAcceptPricePage() {
                     {cancelScheduled ? (
                       <p style={{ margin: "12px 0 0", color: "#b45309", lineHeight: 1.45 }}>
                         {alreadyOnNewPrice
-                          ? "Oprirea abonamentului este deja programată. Dacă apăsați „Continui la noul preț”, reactivăm reînnoirea."
-                          : "Oprirea abonamentului este deja programată. Dacă confirmi acum, reactivăm continuarea la noul preț."}
+                          ? "Oprirea abonamentului este deja programată. Confirmarea prețului păstrează oprirea reînnoirii."
+                          : "Oprirea abonamentului este deja programată. Pentru reactivare, folosește acțiunea separată de mai jos."}
                       </p>
                     ) : null}
                   </div>
@@ -360,24 +363,6 @@ export default function PremiumAcceptPricePage() {
                           Ați confirmat că continuați la noul preț. Mulțumim.
                         </p>
                       )}
-
-                      <button
-                        type="button"
-                        onClick={() => openPortal("cancel")}
-                        disabled={busy}
-                        style={{
-                          width: "100%",
-                          padding: "12px 18px",
-                          borderRadius: 12,
-                          border: "1px solid #fecaca",
-                          background: "#fff",
-                          color: "#991b1b",
-                          fontWeight: 600,
-                          cursor: busy ? "not-allowed" : "pointer",
-                        }}
-                      >
-                        {openingPortal ? "Se deschide portalul…" : "Oprește abonamentul"}
-                      </button>
                     </>
                   ) : (
                     <>
@@ -417,7 +402,7 @@ export default function PremiumAcceptPricePage() {
                           marginBottom: 12,
                         }}
                       >
-                        {submitting ? "Se confirmă…" : "Confirmă și continuă abonamentul"}
+                        {submitting ? "Se confirmă…" : cancelScheduled ? "Confirmă noul preț" : "Confirmă și continuă abonamentul"}
                       </button>
 
                       {!status.addressComplete ? (
@@ -440,28 +425,12 @@ export default function PremiumAcceptPricePage() {
                           {openingPortal ? "Se deschide portalul…" : "Completează adresa de facturare"}
                         </button>
                       ) : null}
-
-                      <button
-                        type="button"
-                        onClick={() => openPortal("cancel")}
-                        disabled={busy}
-                        style={{
-                          width: "100%",
-                          padding: "12px 18px",
-                          borderRadius: 12,
-                          border: "1px solid #fecaca",
-                          background: "#fff",
-                          color: "#991b1b",
-                          fontWeight: 600,
-                          cursor: busy ? "not-allowed" : "pointer",
-                        }}
-                      >
-                        {openingPortal ? "Se deschide portalul…" : "Oprește abonamentul"}
-                      </button>
                     </>
                   )}
                 </>
               ) : null}
+
+              <PremiumRenewalControls onChanged={loadStatus} disabled={busy} />
 
               {missingLabels.length ? (
                 <p style={{ marginTop: 16, color: "#b45309" }}>

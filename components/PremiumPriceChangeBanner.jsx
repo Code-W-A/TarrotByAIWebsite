@@ -13,7 +13,7 @@ export default function PremiumPriceChangeBanner() {
   const router = useRouter();
   const { currentUser, userData, setUserData, loading, isGuestUser } = useAuth();
   const [acknowledging, setAcknowledging] = useState(false);
-  const [openingPortal, setOpeningPortal] = useState(false);
+  const [openingSettings, setOpeningSettings] = useState(false);
   const [error, setError] = useState("");
 
   const path = typeof router?.asPath === "string" ? router.asPath.split("?")[0] : "";
@@ -66,21 +66,14 @@ export default function PremiumPriceChangeBanner() {
     }
   }
 
-  async function openCancelPortal() {
-    setOpeningPortal(true);
+  async function openCancellationSettings() {
+    setOpeningSettings(true);
     setError("");
     try {
-      const response = await fetch("/api/stripe/premium/create-portal-session", {
-        method: "POST",
-        headers: await authHeaders(),
-        body: JSON.stringify({ flow: "cancel" }),
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok || !payload?.url) throw new Error("portal_unavailable");
-      window.location.assign(payload.url);
+      await router.push("/settings?renewal=cancel#premium-renewal");
     } catch (_) {
-      setError("Nu am putut deschide portalul Stripe. Încearcă din nou.");
-      setOpeningPortal(false);
+      setError("Nu am putut deschide setările abonamentului. Încearcă din nou.");
+      setOpeningSettings(false);
     }
   }
 
@@ -149,7 +142,7 @@ export default function PremiumPriceChangeBanner() {
           <button
             type="button"
             onClick={acknowledgeNotice}
-            disabled={acknowledging || openingPortal}
+            disabled={acknowledging || openingSettings}
             style={{
               padding: "10px 14px",
               borderRadius: 10,
@@ -158,16 +151,16 @@ export default function PremiumPriceChangeBanner() {
               color: "#0f172a",
               fontWeight: 700,
               fontSize: 13,
-              cursor: acknowledging || openingPortal ? "not-allowed" : "pointer",
-              opacity: acknowledging || openingPortal ? 0.7 : 1,
+              cursor: acknowledging || openingSettings ? "not-allowed" : "pointer",
+              opacity: acknowledging || openingSettings ? 0.7 : 1,
             }}
           >
             {acknowledging ? "Se salvează…" : "Continui la noul preț"}
           </button>
           <button
             type="button"
-            onClick={openCancelPortal}
-            disabled={acknowledging || openingPortal}
+            onClick={openCancellationSettings}
+            disabled={acknowledging || openingSettings}
             style={{
               padding: "10px 14px",
               borderRadius: 10,
@@ -176,11 +169,11 @@ export default function PremiumPriceChangeBanner() {
               color: "#fecaca",
               fontWeight: 700,
               fontSize: 13,
-              cursor: acknowledging || openingPortal ? "not-allowed" : "pointer",
-              opacity: acknowledging || openingPortal ? 0.7 : 1,
+              cursor: acknowledging || openingSettings ? "not-allowed" : "pointer",
+              opacity: acknowledging || openingSettings ? 0.7 : 1,
             }}
           >
-            {openingPortal ? "Se deschide…" : "Oprește abonamentul"}
+            {openingSettings ? "Se deschide…" : "Oprește reînnoirea"}
           </button>
         </div>
       </div>

@@ -1,3 +1,4 @@
+import { createEbookIntent, availableEbookCredits, spendEbookCredit } from "../../../lib/ebooks/credits";
 import { isValidSignature } from "@sanity/webhook";
 import { getAdminDb } from "../../../lib/firebaseAdmin";
 import { requireAuth, requireDashboardAccess } from "../../../lib/requireAuth";
@@ -21,6 +22,7 @@ import {
   stripeAvailability,
 } from "../../../lib/ebooks/billing";
 import { getVatPercentage } from "../../../lib/globalSettings";
+import { nativeEbookAvailability, confirmNativeEbook, restoreNativeEbooks } from "../../../lib/ebooks/native";
 import {
   assertCustomer,
   promoEnabled,
@@ -51,7 +53,8 @@ async function configInfo() {
       ),
     websiteBilling: availability.web,
     promoEnabled: process.env.EBOOKS_ENABLED === "true" && promoEnabled(),
-    mobileBilling: availability,
+    mobileBilling: nativeEbookAvailability(),
+    mobileProvider: "revenuecat",
   };
 }
 export default async function handler(req, res) {
@@ -118,6 +121,15 @@ export default async function handler(req, res) {
     assertEbooksEnabled();
     const db = getAdminDb();
     const locale = localeOf(req.query.locale);
+    if (first === "credits") {
+      method(req, "GET");
+      return res.json({ credits: await availableEbookCredits(db, assertCustomer(await requireAuth(req))) });
+    }
+    if (first === "native-restore") {
+      method(req, "POST");
+      const user = assertCustomer(await requireAuth(req));
+      return res.json(await restoreNativeEbooks(db, user, req.body.platform));
+    }
     if (first === "admin-sync") {
       method(req, "POST");
       requireDashboardAccess(req);
@@ -192,6 +204,20 @@ export default async function handler(req, res) {
         ),
       );
     }
+    if (second === "native-intent" || second === "use-credit") {
+      method(req, "POST");
+      const user = assertCustomer(await requireAuth(req));
+      await metadata(id, locale, false);
+      if (second === "use-credit") return res.json(await spendEbookCredit(db, user, id, req.body.creditId));
+      if (!nativeEbookAvailability()[req.body.platform]) throw ebookError("Native billing unavailable", 503);
+      return res.json(await createEbookIntent(db, user, id, req.body.platform));
+    }
+    if (second === "native-confirm") {
+      method(req, "POST");
+      const user = assertCustomer(await requireAuth(req));
+      await metadata(id, locale, true);
+      return res.json(await confirmNativeEbook(db, user, id, req.body));
+    }
     const user = assertCustomer(await requireAuth(req));
     await requireEbookAccess(db, user.uid, id);
     if (second === "chapters") {
@@ -247,6 +273,7 @@ export default async function handler(req, res) {
     if (status >= 500)
       console.error("[ebooks]", { status, message: error.message });
     return res.status(status).json({
+      ...(error.code?.startsWith("EBOOK_") ? { code: error.code } : {}),
       error:
         status === 500
           ? "Serviciul ebookurilor nu este disponibil momentan"

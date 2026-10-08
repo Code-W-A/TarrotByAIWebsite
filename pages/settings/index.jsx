@@ -9,49 +9,7 @@ import { serverSideTranslations } from "next-i18next/serverSideTranslations";
 import { useTranslation } from "next-i18next";
 import Head from "next/head";
 import { getFirebaseBearerHeader } from "../../utils/firebaseAuthHeaders";
-import { hasPremiumAccess } from "../../lib/premiumAccess";
-
-function parseCurrentPeriodEndDate(value) {
-  if (value == null || value === undefined) return null;
-  if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
-  if (typeof value?.toDate === "function") {
-    try {
-      const d = value.toDate();
-      return Number.isNaN(d?.getTime?.()) ? null : d;
-    } catch {
-      return null;
-    }
-  }
-  const sec =
-    typeof value.seconds === "number"
-      ? value.seconds
-      : typeof value._seconds === "number"
-        ? value._seconds
-        : null;
-  if (sec != null) {
-    const d = new Date(sec * 1000);
-    return Number.isNaN(d.getTime()) ? null : d;
-  }
-  if (typeof value === "number") {
-    const ms = value > 1e12 ? value : value * 1000;
-    const d = new Date(ms);
-    return Number.isNaN(d.getTime()) ? null : d;
-  }
-  if (typeof value === "string") {
-    const d = new Date(value);
-    return Number.isNaN(d.getTime()) ? null : d;
-  }
-  return null;
-}
-
-function formatSubscriptionDisplayDate(date, locale) {
-  if (!date) return "";
-  try {
-    return new Intl.DateTimeFormat(locale || "ro", { dateStyle: "long" }).format(date);
-  } catch {
-    return date.toLocaleDateString();
-  }
-}
+import PremiumRenewalControls from "../../components/settings/PremiumRenewalControls";
 
 function Copyright() {
   return (
@@ -204,37 +162,6 @@ export default function SettingsHubPage() {
     },
     [t],
   );
-
-  const subscriptionLocale = router.locale || "ro";
-  const premiumNow = hasPremiumAccess(userData);
-  const stripeSubId =
-    typeof userData?.stripeSubscriptionId === "string" && userData.stripeSubscriptionId.trim()
-      ? userData.stripeSubscriptionId.trim()
-      : "";
-  const subStatus =
-    typeof userData?.subscriptionStatus === "string"
-      ? userData.subscriptionStatus.trim().toLowerCase()
-      : "";
-  const cancelScheduled =
-    userData?.premiumSubscriptionCancelAtPeriodEnd === true ||
-    userData?.premiumSubscriptionCancelAtPeriodEnd === "true";
-
-  const periodEndDate = React.useMemo(
-    () => parseCurrentPeriodEndDate(userData?.currentPeriodEnd),
-    [userData?.currentPeriodEnd],
-  );
-  const periodEndFormatted =
-    periodEndDate ? formatSubscriptionDisplayDate(periodEndDate, subscriptionLocale) : "";
-
-  const canceledWithResidualAccess =
-    premiumNow &&
-    subStatus === "canceled" &&
-    periodEndDate &&
-    periodEndDate.getTime() > Date.now();
-  const scheduledCancelBanner =
-    premiumNow && cancelScheduled && !canceledWithResidualAccess;
-  const showCancelButton =
-    stripeSubId && premiumNow && subStatus === "active" && !cancelScheduled;
 
   const displayName = React.useMemo(() => {
     const fn = `${userData?.first_name || ""} ${userData?.last_name || ""}`.trim();
@@ -499,77 +426,7 @@ export default function SettingsHubPage() {
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{visibleTiles.map(renderTile)}</div>
               )}
 
-              {userData?.stripeCustomerId ? (
-                <div className="mt-8 space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                  <p className="text-xs leading-relaxed text-slate-500">
-                    {t("premiumCancelAccessUntilPeriodEnd")}
-                  </p>
-
-                  {!premiumNow ? (
-                    <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
-                      <p className="text-sm text-slate-700">{t("settingsPremiumRenewHint")}</p>
-                      <Link
-                        href="/abonament"
-                        className="mt-3 inline-flex rounded-xl border border-indigo-200 bg-indigo-50/90 px-4 py-2.5 text-sm font-semibold text-indigo-900 transition hover:bg-indigo-100"
-                      >
-                        {t("settingsPremiumRenewCta")}
-                      </Link>
-                    </div>
-                  ) : null}
-
-                  {scheduledCancelBanner ? (
-                    <div className="rounded-xl border border-amber-200 bg-amber-50/90 px-4 py-4">
-                      <p className="text-sm font-semibold text-amber-950">
-                        {t("settingsPremiumScheduledCancelTitle")}
-                      </p>
-                      <p className="mt-1 text-sm text-amber-900">
-                        {t("settingsPremiumScheduledCancelBody", {
-                          date: periodEndFormatted || "—",
-                        })}
-                      </p>
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() => openBillingPortal("default")}
-                          disabled={portalLoading}
-                          className="inline-flex rounded-xl border border-emerald-200 bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-wait disabled:opacity-70"
-                        >
-                          {portalLoading ? t("premiumManageLoading") : t("settingsPremiumReactivateCta")}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => openBillingPortal("default")}
-                          disabled={portalLoading}
-                          className="inline-flex rounded-xl border border-amber-300 bg-white px-4 py-2.5 text-sm font-semibold text-amber-950 transition hover:bg-amber-100 disabled:cursor-wait disabled:opacity-70"
-                        >
-                          {portalLoading ? t("premiumManageLoading") : t("settingsPremiumOpenBillingPortal")}
-                        </button>
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {canceledWithResidualAccess ? (
-                    <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-                      <p className="text-sm text-slate-800">
-                        {t("settingsPremiumCanceledAccessUntil", {
-                          date: periodEndFormatted || "—",
-                        })}
-                      </p>
-                    </div>
-                  ) : null}
-
-                  {showCancelButton ? (
-                    <button
-                      type="button"
-                      onClick={() => openBillingPortal("cancel")}
-                      disabled={portalLoading}
-                      className="inline-flex rounded-xl border border-rose-200 bg-rose-50/90 px-4 py-2.5 text-sm font-semibold text-rose-900 transition hover:bg-rose-100 disabled:cursor-wait disabled:opacity-70"
-                    >
-                      {portalLoading ? t("premiumManageLoading") : t("premiumCancelSubscription")}
-                    </button>
-                  ) : null}
-                </div>
-              ) : null}
+              <PremiumRenewalControls />
 
               <div className="mt-12 flex justify-center">
                 <Copyright />

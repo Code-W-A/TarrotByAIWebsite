@@ -157,21 +157,7 @@ export default async function handler(req, res) {
     }
 
     if (hasValidPriceChangeConsent(user.data)) {
-      let finalSubscription = subscription;
-      if (subscription.cancel_at_period_end === true) {
-        finalSubscription = await stripe.subscriptions.update(
-          subscription.id,
-          {
-            cancel_at_period_end: false,
-            metadata: {
-              ...(subscription.metadata || {}),
-              priceChangeCancelReason: "",
-              priceChangeConsentVersion: PREMIUM_PRICE_CHANGE_CONSENT_VERSION,
-            },
-          },
-          { idempotencyKey: `premium-price-consent-clear-cancel-v1-${subscription.id}` }
-        );
-      }
+      const finalSubscription = subscription;
       return res.status(200).json({
         ok: true,
         alreadyAccepted: true,
@@ -219,7 +205,7 @@ export default async function handler(req, res) {
       });
       migrated = true;
     } else {
-      // Already exclusive: stamp consent metadata and clear any scheduled cancel.
+      // Already exclusive: stamp consent metadata while preserving any scheduled cancellation.
       const exclusiveItem =
         findExclusiveSubscriptionItem(subscription, exclusivePriceId) ||
         subscription.items?.data?.[0];
@@ -230,14 +216,12 @@ export default async function handler(req, res) {
           {
             automatic_tax: { enabled: false },
             default_tax_rates: [fixedVatTaxRateId],
-            cancel_at_period_end: false,
             metadata: {
               ...(subscription.metadata || {}),
               flow: "site_premium",
               uid: authUser.uid,
               taxMigration: PREMIUM_TAX_MIGRATION_METADATA,
               priceChangeConsentVersion: PREMIUM_PRICE_CHANGE_CONSENT_VERSION,
-              priceChangeCancelReason: "",
             },
           },
           { idempotencyKey: `premium-price-consent-stamp-v1-${subscription.id}` }

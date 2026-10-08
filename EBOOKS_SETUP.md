@@ -1,10 +1,10 @@
 # Ebookuri: configurare și activare
 
-Implementare: Sanity Studio separat, Next.js API, Firebase UID comun și Stripe pe site și în aplicație. Citirea este online; traducerile sunt manuale. Codul nu creează conturi sau abonamente externe și nu activează producția.
+Implementare: Sanity Studio separat, Next.js API, Firebase UID comun și Stripe/Oblio pe site și achiziții permanente RevenueCat pe mobil. Citirea este online; traducerile sunt manuale. Codul nu creează conturi sau abonamente externe și nu activează producția.
 
 ## Sanity
 
-### Configurația creată la 3 octombrie 2026
+### Istoric: configurația creată la 3 octombrie 2026
 
 - Proiect: **Cristina Zurba Ebookuri**, `rvz9v34h`; organizație `of0hkcpw2`.
 - Dataset `production`: **privat**, verificat prin API autentificat; momentan fără cărți.
@@ -20,7 +20,7 @@ Implementare: Sanity Studio separat, Next.js API, Firebase UID comun și Stripe 
 3. Instalați separat Studio: `npm ci --prefix ebook-studio`. `npm run build` construiește Studio în `public/ebook-studio`, apoi site-ul. React-ul site-ului rămâne la versiunea existentă. Fără configurație, buildul creează o pagină informativă.
 4. Adăugați originile site-ului în Sanity CORS pentru Studio și permiteți credentials. Fișierele Studio sunt servite din `/ebook-studio/`; editorul se deschide la `/dashboard/ebooks`.
 5. Configurați webhook Sanity POST `/api/ebooks/sanity-webhook`, la creare/modificare/ștergere, filtrul `_type in ["ebook", "ebookEdition"]`, proiecția `{_id,_type}`, secretul `SANITY_EBOOK_WEBHOOK_SECRET`. Backendul verifică semnătura și recitește metadata publicată; nu persistă manuscrisele în Firestore.
-6. Creați cartea, completați coperta și prețul, apoi textul în RO și traducerile dorite. În „Copertă, preț și publicare”, panoul de deasupra formularului afișează câmpurile lipsă și starea fiecărei limbi. Apăsați **„Publică cartea”**: se publică informațiile cărții și toate edițiile complete și valide. RO este obligatorie; traducerile incomplete rămân drafturi. După prima publicare, butonul devine **„Actualizează cartea”**. Folosiți **„Previzualizează”** pentru drafturi și „Sincronizează catalogul” dacă webhookul nu a fost instalat încă.
+6. Creați cartea, completați coperta, apoi textul în RO și traducerile dorite. În „Copertă, preț și publicare”, panoul de deasupra formularului afișează câmpurile lipsă și starea fiecărei limbi. Apăsați **„Publică cartea”**: se publică informațiile cărții și toate edițiile complete și valide. RO este obligatorie; traducerile incomplete rămân drafturi. După prima publicare, butonul devine **„Actualizează cartea”**. Folosiți **„Previzualizează”** pentru drafturi și „Sincronizează catalogul” dacă webhookul nu a fost instalat încă.
 
 Capitolele păstrează `_key` generat de Studio la editare/reordonare; nu ștergeți și recreați capitole doar pentru corecturi. Pentru traduceri puteți copia structura capitolelor și înlocui textul. Progresul este separat pe limbă. **„Arhivează cartea”** ascunde cartea din catalog și păstrează lectura cumpărătorilor. **„Șterge cartea”** elimină definitiv cartea și edițiile, după confirmare. Validatorul împiedică eliminarea capitolelor deja publicate.
 
@@ -29,33 +29,40 @@ Panoul gestionează automat câmpul `status`, care nu mai este editat manual. Op
 **Imaginile standard Sanity sunt publice prin URL, inclusiv într-un dataset privat.** Alegerea acceptată este text privat + imagini CDN. Protecția nu împiedică fotografierea sau extragerea textului de pe dispozitivul unui cumpărător.
 
 ## Stripe și facturare
-- Folosește `STRIPE_SECRET_KEY`, `STRIPE_FIXED_VAT_TAX_RATE_ID`, `NEXT_PUBLIC_SITE_URL` și setarea TVA existente. Prețul din Studio este net, ca la cursuri; catalogul și checkoutul afișează/adaugă TVA conform setărilor existente.
+- Folosește `STRIPE_SECRET_KEY`, `STRIPE_FIXED_VAT_TAX_RATE_ID`, `NEXT_PUBLIC_SITE_URL` și setarea TVA existente. Prețul tuturor cărților este fix: **11 EUR net**. Prețurile/monedele vechi Sanity sunt ignorate; catalogul calculează totalul cu TVA configurat, iar Stripe adaugă rata fiscală existentă. La TVA de 21%, totalul este 13,31 EUR. Verificați concordanța dintre rata Stripe și setarea TVA.
 - Checkoutul folosește formularul de facturare existent și normalizarea server. Factura Oblio folosește aceleași utilitare fiscale și politica e-Factura ca la cursuri. Dacă serviciul lipsește sau răspunsul este ambiguu, plata rămâne validă și factura este marcată `pending_manual` în `payments`, fără retry extern care poate dubla factura.
 - Configurați un endpoint **separat** `/api/ebooks/stripe-webhook` pentru `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `charge.refunded`, cu `STRIPE_EBOOK_WEBHOOK_SECRET`.
 - `EBOOKS_STRIPE_ENABLED=true` activează checkoutul. Confirmarea succesului din URL nu acordă acces. Doar webhookul semnat acordă acces.
 
-## Stripe în aplicația mobilă
+## Achiziții native pe mobil — configurația curentă
 
-- Prețul și moneda vin din metadata publicată în Sanity, identic cu site-ul. Prețul afișat include TVA; serverul recitește prețul net publicat înainte de fiecare checkout. O modificare se aplică sesiunilor noi, fără să schimbe suma unei sesiuni deja create.
-- Aplicația folosește `CourseCheckoutBillingForm` și Stripe Checkout într-un WebView, ca la cursuri. Cererea `POST /api/ebooks/{id}/checkout` include `billingDetails` și `platform: "ios" | "android"`; headerul `x-app-platform` identifică de asemenea platforma.
-- Răspunsul este `{url, returnUrlBase}`. URL-urile de succes/anulare sunt generate exclusiv de server, pe domeniul site-ului, pentru cartea curentă. Aplicația recunoaște doar revenirea la acel URL și verifică accesul prin API. Revenirea cu `checkout=success` nu acordă acces.
-- `GET /api/ebooks/config` expune `websiteBilling` și `mobileBilling: {web, android, ios}`. Butonul de plată este dezactivat când checkoutul nu este configurat.
-- Plata ebookurilor pe iOS are setarea proprie `settings/global.iosEbooksStripeEnabled`, implicit `false`. Se activează separat din `/administrare/setari` → „Plăți ebookuri pe iOS”. Nu depinde de `iosCoursesHidden`. Dacă setările nu pot fi citite, plata iOS este blocată. Backendul verifică atât platforma din corp, cât și headerul; citirea cărților deja cumpărate rămâne disponibilă. Cache-ul setărilor poate întârzia propagarea până la 5 minute.
-- Ebookurile nu au produse Apple/Google, confirmare RevenueCat sau restaurare prin magazine. După reinstalare, autentificarea în același cont încarcă automat „Cărțile mele”. Fluxurile RevenueCat existente pentru alte produse rămân separate.
+1. Configurați o singură dată `ebook_credit_1` pe fiecare platformă: **Consumable** în Apple și produs cu plată unică în Google, consumat prin SDK. Denumirea publică este **Digital book**; descrierea explică deblocarea permanentă a unei singure cărți alese, cu toate traducerile. În aplicație folosim „Cumpără cartea”. Creditul este mecanism intern, fără expirare.
+2. Importați cele două produse în RevenueCat, într-un offering `ebooks`, cu un pachet personalizat. **Nu atașați un entitlement care deblochează toate cărțile** și nu activați un al doilea sold RevenueCat Virtual Currencies. Firestore este registrul unic.
+3. Prețul de bază rămâne **11 EUR fără TVA**. În magazine verificați prețul final cu TVA și conversiile regionale; aplicația afișează `priceString` fără să adauge TVA din nou. Verificați separatorul zecimal din consola localizată înainte de salvare. Site-ul calculează TVA prin configurația Stripe existentă.
+4. Pe server setați `REVENUECAT_IOS_EBOOK_CREDIT_PRODUCT_ID=ebook_credit_1` și `REVENUECAT_ANDROID_EBOOK_CREDIT_PRODUCT_ID=ebook_credit_1`. Păstrați cheile secrete și webhookul existent `/api/revenuecat/webhook`, cu evenimentele `NON_RENEWING_PURCHASE` și `CANCELLATION`. Nu modificați politica globală de restaurare pentru Premium. Câmpurile vechi de produs ale cărților sunt ascunse, iar identificatorii existenți sunt păstrați pentru procesarea achizițiilor istorice.
+5. Expo păstrează cheile SDK existente. UID-ul Firebase real este identitatea RevenueCat. După validarea sandbox, activați separat `IOS_BILLING_EBOOKS_ENABLED=true` și `ANDROID_BILLING_EBOOKS_ENABLED=true`; funcționalitatea generală necesită `EBOOKS_ENABLED=true`. Pentru sandbox folosiți `REVENUECAT_EBOOKS_ALLOW_SANDBOX=true` pe serverul de test. Expo Go nu validează achizițiile native.
+
+API-urile autentificate sunt `POST /api/ebooks/{id}/native-intent`, `POST /api/ebooks/{id}/native-confirm`, `GET /api/ebooks/credits`, `POST /api/ebooks/{id}/use-credit` și `POST /api/ebooks/native-restore`. Intenția fixează cartea înaintea plății; confirmarea trimite intenția și tranzacția verificată. Webhookul înregistrează creditul, fără să ghicească ce carte a selectat utilizatorul. Confirmarea sau acțiunea „Finalizează deblocarea” consumă creditul și acordă acces în aceeași tranzacție Firestore.
+
+O întrerupere după plată lasă creditul disponibil pe cont. Recuperarea după reinstalare folosește registrul serverului, inclusiv când magazinul nu restaurează consumabilele. Tranzacțiile sunt idempotente și legate definitiv de UID; verificarea REST acceptă proprietarul original, iar situațiile de alias așteaptă webhookul autentificat. Refundul invalidează numai creditul și accesul acordat de acesta; sursele Stripe și promoție rămân valide. O plată concurentă pentru o carte deja deținută lasă creditul disponibil.
+
+`GET /api/ebooks/config` expune `mobileProvider: "revenuecat"`, `mobileBilling: {ios, android}` și disponibilitatea Stripe web. Checkoutul ebookurilor respinge cererile mobile. Achizițiile native nu colectează formularul de facturare și nu apelează Oblio; cumpărările web păstrează factura și copia datelor de facturare ale sesiunii.
+
+Referințe: [evenimente RevenueCat](https://www.revenuecat.com/docs/integrations/webhooks/event-types-and-fields), [prețurile Apple](https://developer.apple.com/help/app-store-connect/manage-in-app-purchases/set-a-price-for-an-in-app-purchase).
 
 ## Firebase, UI și rollout
-- Noile colecții `ebookRegistry`, `ebookTransactions`, `ebookPaymentEvents`, `ebookCheckouts`, `ebookStripePayments`, `users/{uid}/ebookAccess`, `users/{uid}/ebookProgress` sunt server-only. Fragmentele sunt în `expo-mobile-app/firestore.rules`: **integrați** regulile în regulile reale, nu înlocuiți producția cu acel fișier fragment. Verificați că regulile wildcard existente nu permit scrieri în colecțiile noi.
+- Noile colecții `ebookRegistry`, `ebookTransactions`, `ebookPaymentEvents`, `ebookCheckouts`, `ebookStripePayments`, `ebookCredits`, `ebookPurchaseIntents`, `users/{uid}/ebookAccess`, `users/{uid}/ebookProgress` sunt server-only. Fragmentele sunt în `expo-mobile-app/firestore.rules`: **integrați** regulile în regulile reale, nu înlocuiți producția cu acel fișier fragment. Verificați că regulile wildcard existente nu permit scrieri în colecțiile noi.
 - Activați `EBOOKS_ENABLED=true` numai cu dataset privat și configurație server. UI: `NEXT_PUBLIC_EBOOKS_ENABLED=true` pe site și `EXPO_PUBLIC_EBOOKS_ENABLED=true` în aplicație.
 - API: catalog `/api/ebooks`, detalii `/{id}`, proprietate `/purchased`, capitol `/{id}/chapters/{chapterId}`, progres GET/PUT `/{id}/progress`, checkout `/{id}/checkout`. `locale` selectează ediția publicată sau RO. Metadatele nu conțin textul capitolelor.
 - Pages: `/ebooks`, `/ebooks/mine`, `/ebooks/{id}`, `/ebooks/{id}/read`. Ecranul principal mobil oferă intrare în catalog.
-- Înainte de activare: testați o cumpărare Stripe test → lectură mobilă cu același cont; o cumpărare Stripe din aplicație → lectură web; reinstalare/autentificare; refund; duplicate/out-of-order webhook; cont diferit; capitole și imagini; RTL și traducere lipsă; progres între dispozitive.
+- Înainte de activare: testați o cumpărare Stripe test → lectură mobilă cu același cont; o cumpărare nativă din aplicație → lectură web; reinstalare/autentificare; refund; duplicate/out-of-order webhook; cont diferit; capitole și imagini; RTL și traducere lipsă; progres între dispozitive.
 - Urmăriți erorile `[ebooks]`, webhookurile retry și tranzacțiile în așteptare. Nu confundați buildul/testele locale cu dovada unei cumpărări reale.
 
 Nu s-au făcut deployment, abonare Sanity, scrieri Firebase de producție, creare produse sau submit în magazine prin implementarea locală.
 
 ## Verificare locală și activare
 
-Testele acoperă prețul calculat pe server, TVA, prețuri distincte și modificate în Sanity, izolarea conturilor, accesul după webhook, plăți în așteptare, webhookuri duplicate, refunduri, facturare și revenirea WebView pe URL-ul corect. Se verifică separat regresiile cursurilor, Premium, analizelor și RevenueCat existent.
+Testele acoperă prețul calculat pe server, TVA, prețul fix de 11 EUR și ignorarea prețurilor vechi din Sanity, izolarea conturilor, accesul după webhook, plăți în așteptare, webhookuri duplicate, refunduri, facturare și confirmarea și restaurarea achizițiilor native. Se verifică separat regresiile cursurilor, Premium, analizelor și RevenueCat existent.
 
 Buildul Studio și exporturile Expo verifică integrarea locală; nu validează o tranzacție reală, un binar nativ sau aprobarea din magazine. Verificarea TypeScript completă a aplicației mobile are erori existente în alte module; erorile modulului ebookurilor sunt verificate separat.
 
@@ -94,7 +101,7 @@ Păstrați variabilele Stripe, Firebase și Oblio existente. Cheia Stripe local�
 - `STRIPE_EBOOK_WEBHOOK_SECRET` este salvat în `.env.local`, ignorat de Git. Acesta este secretul endpointului **live**; cheia API Stripe locală este de test, deci combinația locală nu trebuie folosită pentru procesarea webhookurilor live.
 - Secretul din Vercel a fost verificat printr-un eveniment de diagnostic fără plată: semnătură validă → HTTP 200 `{"skipped":true}`; semnătură invalidă → HTTP 401. Nu au fost create plăți sau drepturi de acces. Aceasta verifică handlerul și secretul, nu livrarea unui eveniment real din Stripe sau o cumpărare.
 
-### Verificare live la 4 octombrie 2026
+### Istoric: verificare live la 4 octombrie 2026
 
 - `/api/ebooks/config`: HTTP 200, `enabled:false`, `websiteBilling:true`, `mobileBilling:{web:true,android:true,ios:false}`. Activarea ebookurilor necesită flagurile Production și redeploy; plata iOS respectă în continuare configurația cursurilor.
 - `/api/ebooks`: catalog dezactivat, fără cărți. Rutele cumpărătorilor și preview răspund HTTP 503 până la activare; verificarea autentificării trebuie repetată după activare.
@@ -115,11 +122,11 @@ Deployment Production `7AbYa6zrQKKjfSxpS34GcqeXAiFx` a ajuns la Ready. Verifică
 - Aplicația locală: `EXPO_PUBLIC_EBOOKS_ENABLED=true` în `.env.local` ignorat. Nu s-a distribuit build sau OTA mobil.
 - Nu există încă un ebook publicat; lectura, traducerile, progresul dintre dispozitive, plata, facturarea și refundurile nu sunt confirmate cap-coadă în producție.
 
-### Separarea setării iOS pentru ebookuri
+### Istoric: separarea setării iOS pentru ebookuri
 
 Codul local folosește acum `iosEbooksStripeEnabled`, cu comutator în `/administrare/setari` și salvare prin API-ul autentificat de setări. Înregistrările live de mai sus descriu deploymentul anterior, care folosea politica cursurilor. Separarea necesită un nou deployment; nu a fost activată în Firestore sau publicată prin această modificare. Nu s-au rulat teste pentru această modificare.
 
-## Reorganizarea interfeței — 4 octombrie 2026
+## Istoric: reorganizarea interfeței — 4 octombrie 2026
 
 Pagina `/dashboard/ebooks` păstrează sidebarul dashboardului, cu Ebookuri selectat, și afișează editorul Sanity într-un panou adaptat la desktop și mobil. „Deschide editorul separat” deschide `/ebook-studio/` într-o filă nouă; autentificarea Sanity rămâne proprie editorului. Sincronizarea manuală blochează apăsările repetate și afișează succesul sau eroarea.
 
@@ -146,3 +153,41 @@ Validarea locală cu API-uri simulate nu dovedește sincronizarea live. După re
 ## Ștergerea unei cărți
 
 În „Copertă, preț și publicare”, apasă butonul vizibil **„Șterge cartea”** din panoul de deasupra formularului și confirmă ștergerea definitivă. Acțiunea elimină documentul cărții și toate edițiile publicate și draft asociate. Cumpărătorii nu vor mai putea citi conținutul șters, de aceea arhivează cartea dacă dorești doar să o scoți din catalog. Înregistrările de plată și acces din Firebase, precum și fișierele din biblioteca media Sanity, rămân păstrate.
+
+## Verificarea implementării native — 8 octombrie 2026
+
+- 101 teste backend/Studio trecute: preț fix, TVA, acces, promoție, confirmare, restaurare, webhookuri duplicate, refunduri și izolarea conturilor, plus regresii RevenueCat/billing.
+- 79 teste Expo trecute: ebookuri și serviciile RevenueCat; testul existent al cititorului identifică acum explicit butonul „Capitolul anterior”, pentru a nu-l confunda cu revenirea din antet.
+- Build Studio și typecheck Studio: reușite. Build Next.js: reușit. Exporturi Metro/Hermes Android și iOS: reușite; acestea nu sunt binare instalate și nu verifică magazinele.
+- Typecheckul global Expo eșuează cu erori în afara fișierelor de producție ebook/RevenueCat modificate (inclusiv App.tsx, navigations.tsx și tipuri Jest). Nu declarăm proiectul Expo complet verificat prin TypeScript.
+- Nu s-au configurat produse, schimbat variabile live, publicat aplicații sau efectuat plăți reale. Rămân configurarea produselor/RevenueCat, activarea flagurilor serverului, deploymentul și testele sandbox pe dispozitive reale.
+
+## Configurare universală efectuată — 8 octombrie 2026
+
+- Google Play: `ebook_credit_1`, denumire **Digital book**, opțiune `standard`, activă în 174 regiuni. Categoria „Carte electronică unică fără ISBN”. Prețurile au fost generate din baza **11 EUR** cu taxele categoriei și rotunjirile Google; România **69,99 RON**. Adminul nu mai configurează produse pentru fiecare carte.
+- Apple: consumabil `ebook_credit_1`, Apple ID `6820575415`, referință **Digital book**. Localizări English US și Romanian („Carte digitală”). Disponibilitate 175 regiuni; categoria Books / Does not have ISBN, ISSN, or ECN. Bază France EUR **13,49 EUR**, cel mai apropiat nivel disponibil de ținta 13,31 EUR; România **69,99 RON**. Prețurile regionale Apple sunt conversii, nu o garanție de 11 EUR net în fiecare țară. Configurație salvată, **Prepare for Submission**, fără trimitere la review; captura reală a noului flux rămâne de adăugat după testul sandbox. Categoria fără ISBN presupune conținut fără un asemenea identificator; reevaluați dacă se schimbă tipul cărților comercializate.
+- RevenueCat: proiect `478417fe`, produs Android `prod31e2fef70c`, produs iOS `prod592a541bf1`, ambele Consumable, fără entitlements asociate. Offering `ebooks` (`ofrngd82f552b0e`), package personalizat `ebook_credit_1`, cu cele două produse. Offeringul Premium existent nu a fost înlocuit.
+- Webhookul existent `whintgref2b5edf49` a fost redenumit **Cristina Zurba Mobile Billing**, către aceeași adresă `/api/revenuecat/webhook`; după confirmarea utilizatorului filtrează **All apps / All events / Both Production and Sandbox**. Autentificarea existentă a fost păstrată. Politica globală de restaurare nu a fost modificată.
+
+### Vercel — configurare și activare separate
+
+Adăugați în mediul care rulează noul backend:
+
+```env
+REVENUECAT_IOS_EBOOK_CREDIT_PRODUCT_ID=ebook_credit_1
+REVENUECAT_ANDROID_EBOOK_CREDIT_PRODUCT_ID=ebook_credit_1
+```
+
+Păstrați cheile existente `REVENUECAT_SECRET_API_KEY`, `REVENUECAT_WEBHOOK_AUTH_TOKEN`, Stripe și Sanity. Variabilele SKU sunt pregătite și în `.env.local`. Nu introduceți chei secrete RevenueCat în Expo.
+
+Pentru serverul dedicat testelor sandbox: `REVENUECAT_EBOOKS_ALLOW_SANDBOX=true`. Flagurile `IOS_BILLING_EBOOKS_ENABLED` și `ANDROID_BILLING_EBOOKS_ENABLED` se activează în mediul testat; în producție numai după validare. Păstrați `EBOOKS_ENABLED`, `NEXT_PUBLIC_EBOOKS_ENABLED` și `EBOOKS_STRIPE_ENABLED` conform activării existente. Faceți redeploy cu noul cod; simpla creare a produselor nu actualizează API-ul live.
+
+Verificați integrarea regulilor server-only pentru `ebookCredits` și `ebookPurchaseIntents` în regulile Firebase reale, inclusiv orice wildcard permisiv. Fișierul Expo cu reguli este un fragment și nu trebuie publicat ca înlocuitor al regulilor proiectului.
+
+### Dovezi și limite
+
+Buildurile Next.js și Sanity Studio și exporturile JavaScript Android/iOS au trecut local. Testele API folosesc date și servicii simulate: verifică accesul comun Stripe → mobil și credit nativ → web, nu reprezintă cumpărări efectuate în magazine. Typecheckul global Expo are erori preexistente, inclusiv în teste; fișierele de producție ale modulului ebooks nu apar în erorile raportate.
+
+Nu există în această verificare dispozitiv Android/iOS conectat sau pornit cu un build sandbox al noului flux. Nu s-au executat plăți sandbox, review Apple, deployment Vercel sau publicare a aplicației. Testarea concurenței reale Firestore și verificarea regulilor live rămân condiții de activare, alături de cumpărarea, întreruperea, recuperarea și refundul sandbox.
+
+Verificarea finală a acestei modificări: **93 teste backend** (inclusiv regresii RevenueCat și configurarea domeniilor) și **63 teste Expo** au trecut. A fost corectat și cazul în care identificatorii unor cursuri dezactivate ajungeau la rezolvarea produselor ebook; aceștia sunt ignorați de domeniul cărților.

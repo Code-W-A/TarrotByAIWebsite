@@ -6,6 +6,7 @@ import { useTranslation } from "next-i18next";
 import { useRouter } from "next/router";
 import i18nextConfig from "../../next-i18next.config";
 import { getLocaleAbbreviation, getLocaleNativeLabel } from "../../lib/localeFlags";
+import { ebookSectionName } from "../Ebooks/sectionName";
 
 // SVG Icons from the old navbar
 const StarIcon = ({ style, className, ...props }) => (
@@ -262,7 +263,7 @@ function Mixed(props) {
   ];
 
   // Special navigation icons from old navbar
-  if (process.env.NEXT_PUBLIC_EBOOKS_ENABLED === 'true') navItems.push({href:'/ebooks',label:'Ebookuri',icon:<span>📖</span>,active:router.pathname.startsWith('/ebooks')});
+  if (process.env.NEXT_PUBLIC_EBOOKS_ENABLED === 'true') navItems.push({href:'/ebooks',label:ebookSectionName(router.locale),icon:<span>📖</span>,active:router.pathname.startsWith('/ebooks')});
 
   const specialNavItems = [
     // {

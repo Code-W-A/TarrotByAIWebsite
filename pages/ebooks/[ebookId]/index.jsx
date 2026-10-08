@@ -10,6 +10,7 @@ import { useRouter } from "next/router";
 import { useAuth } from "../../../context/AuthContext";
 import styles from "../../../components/Ebooks/Detail.module.css";
 import { ebookRequest, ebookText as t } from "../../../components/Ebooks/api";
+import { ebookSectionName } from "../../../components/Ebooks/sectionName";
 export default function EbookDetail() {
   const router = useRouter();
   const { ebookId, checkout } = router.query;
@@ -27,7 +28,7 @@ export default function EbookDetail() {
   const metadataVersion = useRef(0);
   const userRef = useRef(currentUser);
   userRef.current = currentUser;
-  const customer = Boolean(currentUser && !currentUser.isAnonymous);
+  const customer = Boolean(currentUser?.uid && !currentUser.isAnonymous);
   const purchaseIntentHandled = useRef("");
   function login() {
     const returnUrl = `${router.locale && router.locale !== "ro" ? "/" + router.locale : ""}${router.asPath}`;
@@ -252,7 +253,7 @@ export default function EbookDetail() {
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <Link href="/ebooks">← {t(router.locale, "Ebookuri", "Ebooks")}</Link>
+        <Link href="/ebooks">← {ebookSectionName(router.locale)}</Link>
         <Link href="/ebooks/mine">
           {t(router.locale, "Cărțile mele", "My books")}
         </Link>

@@ -20,7 +20,7 @@ export async function inspectPublication(client: any, id: string, languages: str
   const persisted = Boolean(draft || published);
   // A new, untouched form has an ID but is not stored until the first edit.
   // Validate it for guidance without creating or publishing any document.
-  const book = draft || published || { _id: `drafts.${bookId}`, _type: "ebook", currency: "RON", ...localBook };
+  const book = draft || published || { _id: `drafts.${bookId}`, _type: "ebook", ...localBook };
   const bookErrors = errors(await validate({ ...book, status: "published" }, bookId));
   const editions = await Promise.all(languages.map(async (language) => {
     const editionId = `edition-${bookId}-${language}`;
