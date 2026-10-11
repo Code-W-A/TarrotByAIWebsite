@@ -191,3 +191,13 @@ Buildurile Next.js și Sanity Studio și exporturile JavaScript Android/iOS au t
 Nu există în această verificare dispozitiv Android/iOS conectat sau pornit cu un build sandbox al noului flux. Nu s-au executat plăți sandbox, review Apple, deployment Vercel sau publicare a aplicației. Testarea concurenței reale Firestore și verificarea regulilor live rămân condiții de activare, alături de cumpărarea, întreruperea, recuperarea și refundul sandbox.
 
 Verificarea finală a acestei modificări: **93 teste backend** (inclusiv regresii RevenueCat și configurarea domeniilor) și **63 teste Expo** au trecut. A fost corectat și cazul în care identificatorii unor cursuri dezactivate ajungeau la rezolvarea produselor ebook; aceștia sunt ignorați de domeniul cărților.
+
+## Reducere Stripe la 3 RON (TVA inclus)
+
+În pagina cărții, același câmp acceptă codul de acces gratuit existent sau codul de reducere. Reducerea necesită plata Stripe; nu se aplică prețurilor magazinelor mobile.
+
+În Vercel Production adăugați `EBOOK_DISCOUNT_ENABLED=true` și `EBOOK_DISCOUNT_CODE_HASH` (valoarea pregătită în `.env.local`), apoi redeploy. Hashul nu se introduce în Expo sau în variabile NEXT_PUBLIC. Dezactivarea oprește și folosirea autorizărilor de reducere încă neplătite, nu afectează cumpărările finalizate.
+
+Autorizările expiră după 30 de minute, sunt legate de UID și carte și sunt păstrate server-only în `ebookDiscountAuthorizations`. Integrați regula `allow read, write: if false` din fragmentul Firebase în regulile reale, verificând și wildcardurile permisive. Colecția nu conține accesuri sau plăți.
+
+Checkoutul creează idempotent o cotă Stripe inclusivă pentru TVA configurat, păstrând totalul exact de 300 bani și moneda RON. Factura Oblio folosește prețul cu TVA inclus și cota din checkout. Testele locale nu emit plăți sau facturi reale; verificați într-un mediu Stripe/Oblio de test după deployment.

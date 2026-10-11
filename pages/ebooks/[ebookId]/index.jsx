@@ -21,6 +21,7 @@ export default function EbookDetail() {
   const [billingEnabled, setBillingEnabled] = useState(false);
   const [promoEnabled, setPromoEnabled] = useState(false);
   const [code, setCode] = useState("");
+  const [discount, setDiscount] = useState(null);
   const [promoBusy, setPromoBusy] = useState(false);
   const [billingOpen, setBillingOpen] = useState(false);
   const inFlight = useRef(false);
@@ -40,7 +41,7 @@ export default function EbookDetail() {
       .then((c) => {
         if (active) {
           setBillingEnabled(c.enabled && c.websiteBilling);
-          setPromoEnabled(Boolean(c.enabled && c.promoEnabled));
+          setPromoEnabled(Boolean(c.enabled && (c.promoEnabled || c.discountEnabled)));
         }
       })
       .catch(() => {});
@@ -48,6 +49,14 @@ export default function EbookDetail() {
       active = false;
     };
   }, []);
+  useEffect(() => {
+    if (!discount) return;
+    const timer = setTimeout(() => {
+      setDiscount(null);
+      setMessage(t(router.locale, "Reducerea a expirat. Reaplică codul.", "Discount expired. Apply the code again."));
+    }, Math.max(0, discount.expiresAt - Date.now()));
+    return () => clearTimeout(timer);
+  }, [discount, router.locale]);
   const [billing, setBilling] = useState(() =>
     createInitialBillingFormValues(),
   );
@@ -87,6 +96,7 @@ export default function EbookDetail() {
     generation.current++;
     const version = ++metadataVersion.current;
     setCode("");
+    setDiscount(null);
     setPromoBusy(false);
     setBillingOpen(false);
     setBusy(false);
@@ -174,6 +184,7 @@ export default function EbookDetail() {
           method: "POST",
           timeoutMs: 20000,
           body: JSON.stringify({
+            ...(discount ? { discountAuthorization: discount.authorization } : {}),
             billingDetails: buildCourseBillingDetails({
               billingValues: billing,
               ...contact,
@@ -217,6 +228,13 @@ export default function EbookDetail() {
         userRef.current?.uid !== currentUser.uid
       )
         return;
+      if (result.type === "discount") {
+        setDiscount(result);
+        setCode("");
+        setMessage("");
+        return;
+      }
+      setDiscount(null);
       if (!result.owned) throw new Error("Accesul nu a fost confirmat.");
       metadataVersion.current++;
       setBook((previous) =>
@@ -299,8 +317,8 @@ export default function EbookDetail() {
                 <p className={styles.price}>
                   {new Intl.NumberFormat(router.locale || "ro", {
                     style: "currency",
-                    currency: book.currency,
-                  }).format(book.price)}
+                    currency: discount ? discount.currency : book.currency,
+                  }).format(discount ? discount.price : book.price)}
                 </p>
                 <p className={styles.muted}>
                   {t(
@@ -354,11 +372,21 @@ export default function EbookDetail() {
                     <p>
                       {t(
                         router.locale,
-                        "Activează accesul la această carte în contul tău.",
-                        "Activate this book in your account.",
+                        "Aplică o reducere sau activează accesul la această carte.",
+                        "Apply a discount or activate access to this book.",
                       )}
                     </p>
                     {customer ? (
+                      <>
+                      {discount && (
+                        <div role="status">
+                          <p>{t(router.locale, "Cod aplicat — 3 lei, TVA inclus", "Code applied — 3 RON, VAT included")}</p>
+                          <button type="button" className={styles.secondary} disabled={busy || promoBusy}
+                            onClick={() => setDiscount(null)}>
+                            {t(router.locale, "Elimină reducerea", "Remove discount")}
+                          </button>
+                        </div>
+                      )}
                       <form onSubmit={redeem}>
                         <label htmlFor="ebook-promo">
                           {t(
@@ -385,15 +413,16 @@ export default function EbookDetail() {
                             disabled={promoBusy || busy || !code.trim()}
                           >
                             {promoBusy
-                              ? t(router.locale, "Se activează…", "Activating…")
+                              ? t(router.locale, "Se verifică…", "Checking…")
                               : t(
                                   router.locale,
-                                  "Activează accesul",
-                                  "Activate access",
+                                  "Aplică codul",
+                                  "Apply code",
                                 )}
                           </button>
                         </div>
                       </form>
+                      </>
                     ) : (
                       <button className={styles.primary} onClick={login}>
                         {t(

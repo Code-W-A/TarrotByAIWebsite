@@ -215,3 +215,18 @@ it("confirms and restores only the authenticated account", async () => {
   expect((await request("native-restore", "POST", body)).payload.restored).toBe(1);
   expect(restoreNativeEbooks).toHaveBeenCalledWith({}, {uid: "alice"}, "ios");
 });
+
+it("shows the promo field when only discount is enabled without exposing its hash", async () => {
+  const oldEnabled=process.env.EBOOK_DISCOUNT_ENABLED, oldHash=process.env.EBOOK_DISCOUNT_CODE_HASH;
+  process.env.EBOOK_PROMO_ENABLED="false";
+  process.env.EBOOK_DISCOUNT_ENABLED="true"; process.env.EBOOK_DISCOUNT_CODE_HASH="a".repeat(64);
+  try {
+    const r=await request("config");
+    expect(r.payload.promoEnabled).toBe(false);
+    expect(r.payload.discountEnabled).toBe(true);
+    expect(JSON.stringify(r.payload)).not.toContain("a".repeat(64));
+  } finally {
+    if(oldEnabled===undefined) delete process.env.EBOOK_DISCOUNT_ENABLED; else process.env.EBOOK_DISCOUNT_ENABLED=oldEnabled;
+    if(oldHash===undefined) delete process.env.EBOOK_DISCOUNT_CODE_HASH; else process.env.EBOOK_DISCOUNT_CODE_HASH=oldHash;
+  }
+});

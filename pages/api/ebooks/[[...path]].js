@@ -26,6 +26,7 @@ import { nativeEbookAvailability, confirmNativeEbook, restoreNativeEbooks } from
 import {
   assertCustomer,
   promoEnabled,
+  discountEnabled,
   redeemPromo,
 } from "../../../lib/ebooks/promo";
 export const config = { api: { bodyParser: false } };
@@ -53,6 +54,7 @@ async function configInfo() {
       ),
     websiteBilling: availability.web,
     promoEnabled: process.env.EBOOKS_ENABLED === "true" && promoEnabled(),
+    discountEnabled: process.env.EBOOKS_ENABLED === "true" && discountEnabled(),
     mobileBilling: nativeEbookAvailability(),
     mobileProvider: "revenuecat",
   };
@@ -201,6 +203,7 @@ export default async function handler(req, res) {
           req.body.billingDetails,
           req.body.platform || "web",
           req.headers["x-app-platform"],
+          req.body.discountAuthorization,
         ),
       );
     }

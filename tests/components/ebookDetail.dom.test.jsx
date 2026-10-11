@@ -208,3 +208,42 @@ it.each([null, { uid: "anon", isAnonymous: true }])("requires an account before 
   expect(container.querySelector("form")).toBeNull();
   expect(ebookRequest.mock.calls.some(([p]) => p.includes("checkout") || p.includes("redeem"))).toBe(false);
 });
+
+it("applies and removes a discount without unlocking the reader or starting checkout", async () => {
+  await render();
+  ebookRequest.mockResolvedValueOnce({type:"discount",authorization:"token",price:3,currency:"RON",expiresAt:Date.now()+1800000});
+  await code("Discount"); await submit();
+  expect(container.textContent).toContain("Cod aplicat — 3 lei, TVA inclus");
+  expect(container.querySelector('a[href$="/read"]')).toBeNull();
+  expect(button("Aplică codul")).toBeTruthy();
+  expect(ebookRequest.mock.calls.some(([p]) => p.includes("checkout"))).toBe(false);
+  await act(async () => button("Elimină reducerea").click());
+  expect(container.textContent).not.toContain("Cod aplicat");
+  expect(container.textContent).toContain("20,00");
+});
+it("clears applied discount when the account changes", async () => {
+  await render();
+  ebookRequest.mockResolvedValueOnce({type:"discount",authorization:"token",price:3,currency:"RON",expiresAt:Date.now()+1800000});
+  await code(); await submit();
+  mockUser={uid:"bob"}; await render();
+  expect(container.textContent).not.toContain("Cod aplicat");
+});
+
+it("expires the discount and restores the original price", async () => {
+  jest.useFakeTimers();
+  try {
+    await render();
+    ebookRequest.mockResolvedValueOnce({type:"discount",authorization:"token",price:3,currency:"RON",expiresAt:Date.now()+1000});
+    await code(); await submit();
+    expect(container.textContent).toContain("Cod aplicat");
+    await act(async () => jest.advanceTimersByTime(1000));
+    expect(container.textContent).toContain("Reducerea a expirat");
+    expect(container.textContent).not.toContain("Cod aplicat");
+  } finally { jest.useRealTimers(); }
+});
+
+it("shows the shared code field when only the Stripe discount is enabled", async () => {
+  ebookRequest.mockImplementation(async path => path === "/config" ? {enabled:true,websiteBilling:true,promoEnabled:false,discountEnabled:true} : book);
+  await render();
+  expect(container.querySelector("#ebook-promo")).toBeTruthy();
+});
