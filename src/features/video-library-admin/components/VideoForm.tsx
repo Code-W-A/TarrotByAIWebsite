@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Timestamp } from "firebase/firestore";
+import { Pencil, Plus } from "lucide-react";
 import type { VideoCreateInput, VideoDoc, VideoLocales, VideoPlatform } from "../types/video";
 import {
   RO_VIDEO_URL_REQUIRED_MESSAGE,
@@ -206,7 +207,28 @@ export default function VideoForm({ initialValue, onCancel, onSubmit, loading = 
   const roCardRef = useRef<HTMLDivElement>(null);
   const videoFormLocales = useMemo(() => sortLocalesForVideoAdmin(SITE_LOCALES), []);
 
-  const hasLocalePreview = Boolean(locales && Object.keys(locales).length > 0);
+  const manualLocaleFields = useRef<Record<string, Partial<Record<"title" | "description", string>>>>({});
+  const [localeEditor, setLocaleEditor] = useState<{
+    locale: string;
+    label: string;
+    field: "title" | "description";
+    value: string;
+  } | null>(null);
+
+  const applyLocaleEdit = () => {
+    if (!localeEditor || uiLocked) return;
+    const { locale, field, value } = localeEditor;
+    const text = value.trim();
+    manualLocaleFields.current[locale] = {
+      ...manualLocaleFields.current[locale],
+      [field]: text,
+    };
+    setLocales((prev) => ({
+      ...prev,
+      [locale]: { title: "", ...prev?.[locale], [field]: text },
+    }));
+    setLocaleEditor(null);
+  };
 
   const formatDateTimeLocal = (date: Date) => {
     const pad = (value: number) => String(value).padStart(2, "0");
@@ -245,6 +267,8 @@ export default function VideoForm({ initialValue, onCancel, onSubmit, loading = 
 
   useEffect(() => {
     setActiveTab("general");
+    manualLocaleFields.current = {};
+    setLocaleEditor(null);
     if (initialValue) {
       setForm({
         title: initialValue.title || "",
@@ -530,6 +554,9 @@ export default function VideoForm({ initialValue, onCancel, onSubmit, loading = 
           description: descriptionTranslated ? descriptionTranslated : undefined,
           ...(keepVideo ? { videoUrl: keepVideo } : {}),
         };
+      }
+      for (const [lang, fields] of Object.entries(manualLocaleFields.current)) {
+        result[lang] = { title: "", ...result[lang], ...fields };
       }
       setLocales(result);
       setTranslateMessage("Localizarea s-a terminat. Poți continua.");
@@ -1110,75 +1137,88 @@ export default function VideoForm({ initialValue, onCancel, onSubmit, loading = 
               </div>
               <p className="mt-1.5 text-xs text-gray-500">
                 Traducerea folosește titlul și descrierea din pasul General; localizările se salvează
-                la salvarea videoclipului.
+                la salvarea videoclipului. Poți adăuga sau edita manual fiecare text; descrierea este opțională.
               </p>
-              {hasLocalePreview ? (
-                <div className="mt-4 overflow-hidden rounded-xl border border-gray-200">
-                  <div className="border-b border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-700">
-                    Localizări generate (titlu / descriere)
-                  </div>
-                  <div className="max-h-[min(40vh,320px)] overflow-y-auto overscroll-contain">
-                    <table className="min-w-full text-left text-sm">
-                      <thead className="sticky top-0 z-[1] bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-700">
-                        <tr>
-                          <th className="px-4 py-2.5">Limbă</th>
-                          <th className="px-4 py-2.5">Titlu</th>
-                          <th className="px-4 py-2.5">Descriere</th>
-                          <th className="px-4 py-2.5">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200 bg-white">
-                        {videoFormLocales.map((lc) => {
-                          const langInfo = (LANGUAGE_LABELS as Record<string, { denumire?: string }>)?.[
-                            lc
-                          ];
-                          const langLabel =
-                            typeof langInfo?.denumire === "string" && langInfo.denumire.trim()
-                              ? langInfo.denumire
-                              : lc;
-                          const entry = locales?.[lc];
-                          const titleVal =
-                            typeof entry?.title === "string" ? entry.title.trim() : "";
-                          const descVal =
-                            typeof entry?.description === "string" ? entry.description.trim() : "";
-                          const isMissing = !titleVal;
-                          return (
-                            <tr key={lc}>
-                              <td className="px-4 py-2.5 font-medium text-gray-900">
-                                {langLabel}{" "}
-                                <span className="text-xs font-normal text-gray-500">({lc})</span>
-                              </td>
-                              <td
-                                className="max-w-[12rem] truncate px-4 py-2.5 text-gray-700"
-                                title={titleVal}
-                              >
-                                {isMissing ? <span className="text-gray-400">—</span> : titleVal}
-                              </td>
-                              <td
-                                className="max-w-[14rem] truncate px-4 py-2.5 text-gray-700"
-                                title={descVal}
-                              >
-                                {!descVal ? <span className="text-gray-400">—</span> : descVal}
-                              </td>
-                              <td className="px-4 py-2.5">
-                                <span
-                                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${
-                                    isMissing
-                                      ? "bg-amber-50 text-amber-700 ring-amber-600/20"
-                                      : "bg-emerald-50 text-emerald-700 ring-emerald-600/20"
-                                  }`}
-                                >
-                                  {isMissing ? "Lipsește" : "OK"}
-                                </span>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
+              <div className="mt-4 overflow-hidden rounded-xl border border-gray-200">
+                <div className="border-b border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-700">
+                  Localizări (titlu / descriere)
                 </div>
-              ) : null}
+                <div className="max-h-[min(40vh,320px)] overflow-auto overscroll-contain">
+                  <table className="min-w-full text-left text-sm">
+                    <thead className="sticky top-0 z-[1] bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-700">
+                      <tr>
+                        <th className="px-4 py-2.5">Limbă</th>
+                        <th className="px-4 py-2.5">Titlu</th>
+                        <th className="px-4 py-2.5">Descriere</th>
+                        <th className="px-4 py-2.5">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 bg-white">
+                      {videoFormLocales.map((lc) => {
+                        const langInfo = (LANGUAGE_LABELS as Record<string, { denumire?: string }>)?.[
+                          lc
+                        ];
+                        const langLabel =
+                          typeof langInfo?.denumire === "string" && langInfo.denumire.trim()
+                            ? langInfo.denumire
+                            : lc;
+                        const entry = locales?.[lc];
+                        const titleVal =
+                          typeof entry?.title === "string" ? entry.title.trim() : "";
+                        const descVal =
+                          typeof entry?.description === "string" ? entry.description.trim() : "";
+                        const isMissing = !titleVal;
+                        const statusLabel = isMissing
+                          ? descVal ? "Lipsește titlul" : "Lipsesc titlul și descrierea"
+                          : !descVal ? "Lipsește descrierea (opțională)" : "Titlu și descriere completate";
+                        return (
+                          <tr key={lc}>
+                            <td className="px-4 py-2.5 font-medium text-gray-900">
+                              {langLabel}{" "}
+                              <span className="text-xs font-normal text-gray-500">({lc})</span>
+                            </td>
+                            {(["title", "description"] as const).map((field) => {
+                              const value = field === "title" ? titleVal : descVal;
+                              const fieldLabel = field === "title" ? "titlul" : "descrierea";
+                              return (
+                                <td key={field} className="px-4 py-2.5 text-gray-700">
+                                  <div className="flex items-center gap-2">
+                                    <span className="block max-w-[12rem] truncate" title={value}>
+                                      {value || <span className="text-gray-400">—</span>}
+                                    </span>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="icon"
+                                      className="h-8 w-8 shrink-0"
+                                      disabled={uiLocked}
+                                      aria-label={`${value ? "Editează" : "Adaugă"} ${fieldLabel} — ${langLabel} (${lc})`}
+                                      onClick={() => setLocaleEditor({ locale: lc, label: langLabel, field, value: entry?.[field] || "" })}
+                                    >
+                                      {value ? <Pencil className="h-3.5 w-3.5" aria-hidden="true" /> : <Plus className="h-4 w-4" aria-hidden="true" />}
+                                    </Button>
+                                  </div>
+                                </td>
+                              );
+                            })}
+                            <td className="px-4 py-2.5">
+                              <span
+                                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${
+                                  isMissing || !descVal
+                                    ? "bg-amber-50 text-amber-700 ring-amber-600/20"
+                                    : "bg-emerald-50 text-emerald-700 ring-emerald-600/20"
+                                }`}
+                              >
+                                {statusLabel}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           ) : null}
         </div>
@@ -1215,6 +1255,57 @@ export default function VideoForm({ initialValue, onCancel, onSubmit, loading = 
           </div>
         </div>
       </form>
+
+      <Dialog open={Boolean(localeEditor)} onOpenChange={(open) => { if (!open && !uiLocked) setLocaleEditor(null); }}>
+        <DialogContent
+          className="mx-0 flex max-h-[85dvh] max-w-xl flex-col overflow-y-auto"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="locale-editor-title"
+          aria-describedby="locale-editor-description"
+          onKeyDown={(event) => {
+            if (event.key === "Escape" && !uiLocked) setLocaleEditor(null);
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle id="locale-editor-title">
+              {localeEditor?.field === "title" ? "Titlu" : "Descriere"} — {localeEditor?.label} ({localeEditor?.locale})
+            </DialogTitle>
+            <DialogDescription id="locale-editor-description">
+              Textul se salvează definitiv la salvarea videoclipului.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="px-6">
+            <label htmlFor="locale-editor-value" className="text-sm font-medium text-gray-700">
+              {localeEditor?.field === "title" ? "Titlu" : "Descriere (opțională)"}
+            </label>
+            {localeEditor?.field === "title" ? (
+              <input
+                id="locale-editor-value"
+                autoFocus
+                className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                value={localeEditor.value}
+                disabled={uiLocked}
+                onChange={(event) => setLocaleEditor((prev) => prev ? { ...prev, value: event.target.value } : null)}
+              />
+            ) : (
+              <textarea
+                id="locale-editor-value"
+                autoFocus
+                rows={8}
+                className="mt-2 w-full resize-y rounded-md border border-gray-300 px-3 py-2 text-sm"
+                value={localeEditor?.value || ""}
+                disabled={uiLocked}
+                onChange={(event) => setLocaleEditor((prev) => prev ? { ...prev, value: event.target.value } : null)}
+              />
+            )}
+          </div>
+          <DialogFooter className="flex-wrap">
+            <Button type="button" variant="outline" disabled={uiLocked} onClick={() => setLocaleEditor(null)}>Anulează</Button>
+            <Button type="button" disabled={uiLocked} onClick={applyLocaleEdit}>Aplică</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <ChapterEditorDialog
         open={chapterDialogOpen}
