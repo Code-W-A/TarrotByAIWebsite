@@ -2,10 +2,14 @@
 import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import VideoForm from '../../src/features/video-library-admin/components/VideoForm';
-import { gTranslateFetch } from '../../utils/apiUtils';
+import { requestVideoTranslation } from '../../src/features/video-library-admin/services/videoTranslation';
 
 jest.mock('../../src/features/video-library-admin/services/videos.service', () => ({ listVideoCategories: jest.fn(async () => []) }));
-jest.mock('../../utils/apiUtils', () => ({ gTranslateFetch: jest.fn(async (text, lang) => `${lang}: ${text}`) }));
+jest.mock('../../src/features/video-library-admin/services/videoTranslation', () => {
+  const actual = jest.requireActual('../../src/features/video-library-admin/services/videoTranslation');
+  const requestVideoTranslation = jest.fn(async (text, lang) => `${lang}: ${text}`);
+  return { ...actual, requestVideoTranslation, runVideoTranslationSession: (session, args) => actual.runVideoTranslationSession(session, { ...args, translate: requestVideoTranslation }) };
+});
 jest.mock('../../src/features/video-library-admin/utils/siteLocales', () => ({ SITE_LOCALES: ['ro', 'en', 'fr'] }));
 jest.mock('../../src/features/video-library-admin/components/ChapterEditorDialog', () => () => null);
 
@@ -56,7 +60,7 @@ it('adds translations without generation, cancels drafts, and saves/reopens the 
   expect(saved.locales.en.title).toBe('Manual title');
   expect(saved.locales.en.description).toContain('Line one\n');
   expect(saved.locales.ro.videoUrl).toBe(video.videoUrl);
-  expect(gTranslateFetch).not.toHaveBeenCalled();
+  expect(requestVideoTranslation).not.toHaveBeenCalled();
   await render({ ...video, ...saved }); await click(button('Localizare'));
   await click(fieldButton('descrierea', 'en'));
   expect(document.getElementById('locale-editor-value').value).toBe(saved.locales.en.description);
@@ -82,9 +86,14 @@ it('protects manual values including intentional blanks during regeneration and 
   await edit('titlul', 'en', 'Manual title');
   await edit('descrierea', 'en', '');
   let release;
-  gTranslateFetch.mockImplementationOnce(() => new Promise(resolve => { release = resolve; }));
+  requestVideoTranslation.mockImplementationOnce(() => new Promise(resolve => { release = resolve; }));
   await click(button('Generează localizări'));
   expect(fieldButton('titlul', 'en').disabled).toBe(true);
+  expect(container.querySelector('[role="status"]').textContent).toMatch(/Engleză: fragmentul 1\/2/);
+  expect(button('Se localizează...').disabled).toBe(true);
+  expect(onSubmit).not.toHaveBeenCalled();
+  await click(button('Se localizează...'));
+  expect(requestVideoTranslation).toHaveBeenCalledTimes(1);
   await act(async () => release('Automatic title'));
   const saved = await submit();
   expect(saved.locales.en.title).toBe('Manual title');
@@ -113,5 +122,26 @@ it('creates a new video with manual localization and no automatic translation', 
   await edit('descrierea', 'en', 'New English description');
   const saved = await submit();
   expect(saved.locales.en).toEqual({ title: 'New English title', description: 'New English description' });
-  expect(gTranslateFetch).not.toHaveBeenCalled();
+  expect(requestVideoTranslation).not.toHaveBeenCalled();
+});
+
+it('keeps existing fields on failure, exposes progress, and resumes without retranslating successful fragments', async () => {
+  await render({ ...video, locales: { ro: { title: video.title, videoUrl: video.videoUrl }, en: { title: 'Old English', description: 'Old description', videoUrl: video.videoUrl } } });
+  await click(button('Localizare'));
+  requestVideoTranslation.mockImplementation(async (text, lang) => {
+    if (lang === 'en' && text === 'Descriere RO') throw new Error('Furnizor indisponibil');
+    return `${lang}: ${text}`;
+  });
+  await click(button('Generează localizări'));
+  expect(container.textContent).toContain('Localizarea a eșuat');
+  expect(container.textContent).not.toContain('Localizarea s-a terminat');
+  expect(fieldButton('titlul', 'en').closest('td').textContent).toContain('Old English');
+  expect(fieldButton('descrierea', 'en').closest('td').textContent).toContain('Old description');
+  const before = requestVideoTranslation.mock.calls.filter(([text, lang]) => lang === 'en' && text === 'Titlu RO').length;
+  requestVideoTranslation.mockImplementation(async (text, lang) => `${lang}: ${text}`);
+  await click(button('Reîncearcă localizarea'));
+  expect(container.textContent).toContain('Localizarea s-a terminat');
+  expect(requestVideoTranslation.mock.calls.filter(([text, lang]) => lang === 'en' && text === 'Titlu RO')).toHaveLength(before);
+  const saved = await submit();
+  expect(saved.locales.en).toEqual({ title: 'en: Titlu RO', description: 'en: Descriere RO', videoUrl: video.videoUrl });
 });

@@ -11,7 +11,7 @@ import {
 } from "../utils/videoValidation";
 import { listVideoCategories } from "../services/videos.service";
 import { LANGUAGE_LABELS } from "../../../../data/constants";
-import { gTranslateFetch } from "../../../../utils/apiUtils";
+import { createVideoTranslationSession, runVideoTranslationSession } from "../services/videoTranslation";
 import {
   deriveRootVideoUrlFromLocales,
   hasAnyLocalizedVideoUrl,
@@ -208,6 +208,13 @@ export default function VideoForm({ initialValue, onCancel, onSubmit, loading = 
   const videoFormLocales = useMemo(() => sortLocalesForVideoAdmin(SITE_LOCALES), []);
 
   const manualLocaleFields = useRef<Record<string, Partial<Record<"title" | "description", string>>>>({});
+  const translationSession = useRef(null);
+  const translationController = useRef<AbortController | null>(null);
+  const [translationFailed, setTranslationFailed] = useState(false);
+  useEffect(() => () => {
+    translationController.current?.abort();
+    translationController.current = null;
+  }, []);
   const [localeEditor, setLocaleEditor] = useState<{
     locale: string;
     label: string;
@@ -267,6 +274,12 @@ export default function VideoForm({ initialValue, onCancel, onSubmit, loading = 
 
   useEffect(() => {
     setActiveTab("general");
+    translationController.current?.abort();
+    translationController.current = null;
+    translationSession.current = null;
+    setIsTranslating(false);
+    setTranslationFailed(false);
+    setTranslateMessage("");
     manualLocaleFields.current = {};
     setLocaleEditor(null);
     if (initialValue) {
@@ -525,47 +538,52 @@ export default function VideoForm({ initialValue, onCancel, onSubmit, loading = 
   };
 
   const generateLocales = async (): Promise<VideoLocales | undefined> => {
+    if (translationController.current) return undefined;
     if (!form.title?.trim()) {
       setTranslateMessage("Completează titlul înainte de localizare.");
       return undefined;
     }
     setIsTranslating(true);
+    setTranslationFailed(false);
     setTranslateMessage("");
+    const controller = new AbortController();
+    translationController.current = controller;
+    const baseTitle = form.title.trim();
+    const baseDescription = form.description?.trim() || "";
+    const nextSession = createVideoTranslationSession(baseTitle, baseDescription, videoFormLocales);
+    if (translationSession.current?.key !== nextSession.key) translationSession.current = nextSession;
+    const session = translationSession.current;
+    let progressLabel = "";
+    const mergeLocale = (previous, lang, fields) => {
+      const keepVideo = localeVideoUrls[lang]?.trim() || previous?.[lang]?.videoUrl?.trim();
+      return { ...previous, [lang]: { ...fields, ...manualLocaleFields.current[lang], ...(keepVideo ? { videoUrl: keepVideo } : {}) } };
+    };
     try {
-      const result: VideoLocales = {};
-      const baseTitle = form.title.trim();
-      const baseDescription = form.description?.trim() || "";
-      for (const lang of videoFormLocales) {
-        const keepVideo = localeVideoUrls[lang]?.trim() || locales?.[lang]?.videoUrl?.trim();
-        if (lang === "ro") {
-          result[lang] = {
-            title: baseTitle,
-            description: baseDescription || undefined,
-            ...(keepVideo ? { videoUrl: keepVideo } : {}),
-          };
-          continue;
-        }
-        const [titleTranslated, descriptionTranslated] = await Promise.all([
-          gTranslateFetch(baseTitle, lang),
-          baseDescription ? gTranslateFetch(baseDescription, lang) : Promise.resolve(""),
-        ]);
-        result[lang] = {
-          title: titleTranslated || baseTitle,
-          description: descriptionTranslated ? descriptionTranslated : undefined,
-          ...(keepVideo ? { videoUrl: keepVideo } : {}),
-        };
-      }
-      for (const [lang, fields] of Object.entries(manualLocaleFields.current)) {
-        result[lang] = { title: "", ...result[lang], ...fields };
-      }
+      await runVideoTranslationSession(session, {
+        title: baseTitle, description: baseDescription, languages: videoFormLocales,
+        signal: controller.signal,
+        onProgress: ({ language, current, total }) => {
+          progressLabel = `${LANGUAGE_LABELS[language]?.denumire || language.toUpperCase()}: fragmentul ${current}/${total}`;
+          setTranslateMessage(`${progressLabel}. Păstrează pagina deschisă.`);
+        },
+        onLocale: (lang, fields) => setLocales(previous => mergeLocale(previous, lang, fields)),
+      });
+      if (controller.signal.aborted) return undefined;
+      let result: VideoLocales = { ...locales };
+      for (const [lang, fields] of Object.entries(session.completed)) result = mergeLocale(result, lang, fields);
       setLocales(result);
       setTranslateMessage("Localizarea s-a terminat. Poți continua.");
       return result;
-    } catch {
-      setTranslateMessage("Localizarea a eșuat. Încearcă din nou.");
+    } catch (error) {
+      if (controller.signal.aborted) return undefined;
+      setTranslationFailed(true);
+      setTranslateMessage(`Localizarea a eșuat (${progressLabel}): ${error.message || "eroare de traducere"}. Rezultatele complete sunt păstrate. Apasă Reîncearcă localizarea pentru a continua.`);
       return undefined;
     } finally {
-      setIsTranslating(false);
+      if (translationController.current === controller) {
+        translationController.current = null;
+        setIsTranslating(false);
+      }
     }
   };
 
@@ -1121,10 +1139,12 @@ export default function VideoForm({ initialValue, onCancel, onSubmit, loading = 
                   onClick={() => void generateLocales()}
                   disabled={uiLocked}
                 >
-                  {isTranslating ? "Se localizează..." : "Generează localizări"}
+                  {isTranslating ? "Se localizează..." : translationFailed ? "Reîncearcă localizarea" : "Generează localizări"}
                 </Button>
                 {translateMessage ? (
                   <p
+                    role="status"
+                    aria-live="polite"
                     className={`text-sm ${
                       translateMessage.includes("eșuat") || translateMessage.includes("Completează")
                         ? "text-red-600"
