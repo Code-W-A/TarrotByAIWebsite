@@ -1,4 +1,6 @@
 // In-memory Firestore model with real materialized-cache reads/writes.
+import { Writable } from "node:stream";
+import { gunzipSync } from "node:zlib";
 export function createVideoCacheDb(rows = []) {
   const source = new Map(rows.map(row => [row.id, row]));
   const caches = new Map();
@@ -32,7 +34,7 @@ export function createVideoCacheDb(rows = []) {
         id,
         get: async () => { reads.push({ name, id }); return snap(id, store.get(id)); },
         set: async (data, options) => {
-          if (id.startsWith("videoLibraryPublic__") && beforeChunkWrite) await beforeChunkWrite(id, data);
+          if (id.startsWith("videoLibraryPublicV3__") && beforeChunkWrite) await beforeChunkWrite(id, data);
           store.set(id, options?.merge ? { ...store.get(id), ...data } : data);
         },
       }),
@@ -64,8 +66,19 @@ export const videoRow = (index, extra = {}) => ({
 });
 
 export function makeVideoRes() {
-  const res = { headers: {}, statusCode: 200 };
+  const chunks = [];
+  const res = new Writable({
+    write(chunk, _encoding, callback) { chunks.push(Buffer.from(chunk)); callback(); },
+    final(callback) {
+      const buffer = Buffer.concat(chunks);
+      res.body = JSON.parse((res.headers['Content-Encoding'] === 'gzip' ? gunzipSync(buffer) : buffer).toString('utf8'));
+      callback();
+    },
+  });
+  res.headers = {}; res.statusCode = 200;
   res.setHeader = (key, value) => { res.headers[key] = value; };
+  res.getHeader = key => res.headers[key];
+  res.removeHeader = key => { delete res.headers[key]; };
   res.status = code => { res.statusCode = code; return res; };
   res.json = payload => { res.body = payload; return res; };
   return res;

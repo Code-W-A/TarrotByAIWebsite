@@ -18,7 +18,7 @@ export default async function handler(req, res) {
     requireDashboardAccess(req);
     const cache = getAdminDb().collection("internalCaches");
     const [manifestSnap, buildSnap] = await Promise.all([
-      cache.doc("videoLibraryPublic").get(), cache.doc("videoLibraryPublicBuild").get(),
+      cache.doc(materializedCache.MANIFEST_ID).get(), cache.doc(materializedCache.BUILD_ID).get(),
     ]);
     const manifest = manifestSnap.data();
     const build = buildSnap.data();

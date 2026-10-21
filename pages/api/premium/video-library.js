@@ -13,6 +13,7 @@ import { isSubscriptionSystemEnabled } from "../../../lib/globalSettings";
 import { withFirestoreReadTelemetry } from "../../../lib/firestoreCostLogger";
 import { resolveRowVideoSourceWithMeta } from "../../../lib/videoLibraryPublic";
 import { normalizeAppPlatform } from "../../../lib/appPlatform";
+import { sendVideoLibraryJson } from "../../../lib/videoLibraryJsonResponse";
 import {
   auditVideoPlayback,
   buildVideoRequestTelemetry,
@@ -22,6 +23,9 @@ import {
 function buildRequestId() {
   return `vl_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
+
+// Large JSON responses are streamed; this only disables Next's buffered-response warning.
+export const config = { api: { responseLimit: false } };
 
 async function handler(req, res) {
   const requestId = buildRequestId();
@@ -242,7 +246,7 @@ async function handler(req, res) {
             })
           : undefined,
     };
-    return res.status(200).json(responsePayload);
+    return await sendVideoLibraryJson(req, res, responsePayload);
   } catch (error) {
     console.error("[premium.video-library] failed", {
       requestId,
