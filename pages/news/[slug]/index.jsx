@@ -14,7 +14,7 @@ import {
   loadPublicArticleDetail,
   loadPublicArticles,
 } from "../../../lib/publicArticles";
-import AdPlacementShell from "../../../components/Ads/AdPlacementShell";
+import ArticleAdSense from "../../../components/Ads/ArticleAdSense";
 import PartnerPromoSlot from "../../../components/PartnerPromotions/PartnerPromoSlot";
 
 const SIDEBAR_ARTICLES_LIMIT = 12;
@@ -424,7 +424,6 @@ function BlogDetail({ articles, filteredArticle, relatedArticles, error, slug })
                   </div>
                 )}
 
-                <AdPlacementShell placementId="banner1" />
                 <PartnerPromoSlot placement="web_article_detail" className="my-6" />
 
                 {/* Main Article Content */}
@@ -476,7 +475,11 @@ function BlogDetail({ articles, filteredArticle, relatedArticles, error, slug })
                   </div>
                 </article>
 
-                <AdPlacementShell placementId="banner2" />
+                <ArticleAdSense
+                  key={slug}
+                  article={filteredArticle}
+                  locale={detectedLng}
+                />
 
                 {/* YouTube Videos - Enhanced Design */}
                 {filteredArticle?.youtubeLinks && filteredArticle.youtubeLinks.length > 0 && (
@@ -536,7 +539,6 @@ function BlogDetail({ articles, filteredArticle, relatedArticles, error, slug })
 
               </div>
 
-              <AdPlacementShell placementId="banner3" />
 
               {/* Related Articles */}
               {relatedArticles.length > 0 && (

@@ -56,7 +56,7 @@ Users without the key will see a maintenance message and will be prevented from 
 
 ## Ads orchestration (Adsterra Native Banner)
 
-Primary monetization uses discrete Adsterra Native Banner slots on public pages (see `lib/ads/config.js` allowlist). AdSense runs in parallel on `/main-dashboard` only (manual `MainDashboardTopAd` + Auto Ads gate); the two providers no longer share routes, so they coexist without the global `NEXT_PUBLIC_ENABLE_ADSTERRA` mutex.
+Primary monetization uses discrete Adsterra Native Banner slots on public pages (see `lib/ads/config.js` allowlist). AdSense runs on `/main-dashboard` and `/videouri`, with an optional manual banner after article text on `/news/[slug]`; the two providers no longer share routes, so they coexist without the global `NEXT_PUBLIC_ENABLE_ADSTERRA` mutex.
 
 - Route policy: `lib/ads/config.js`
 - Slots: `components/Ads/AdPlacementShell.jsx` + `AdsterraSlot.jsx`
@@ -99,3 +99,9 @@ Apply these in Cloudflare dashboard for the same domain:
 3. `Security > WAF > Custom rules`:
    - Block obvious automation UAs (`curl`, `python-requests`, `wget`, headless agents).
 4. `Analytics / Logs`: monitor sudden spikes by country/referrer/IP ASN and challenge/block those patterns.
+
+### Article AdSense rollout
+
+Article detail replaces its three Adsterra placements with one manual AdSense slot after the article text. `/news` keeps Adsterra. Set `NEXT_PUBLIC_ENABLE_ARTICLE_ADSENSE=true` and `NEXT_PUBLIC_GOOGLE_ADSENSE_ARTICLE_SLOT_ID` alongside the existing AdSense client ID and general flag, then rebuild. Missing configuration or the default disabled flag renders no article ad. No live ad requests are made in development.
+
+Before production activation, check account serving notifications, the site's certified CMP/consent setup and Auto Ads exclusions for article URLs (including locale prefixes), so Auto Ads does not add placements beyond the manual slot. The article banner honors the existing `NEXT_PUBLIC_ADS_CONSENT_REQUIRED` / Cookiebot consent gate; this does not install or certify a CMP. Test without clicking ads, then monitor the dedicated slot and traffic sources. Layout precautions reduce accidental-click risk but cannot guarantee protection against invalid traffic.

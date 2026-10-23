@@ -160,3 +160,7 @@ video.unrulymedia.com, 947824792, RESELLER
 video.unrulymedia.com, 703273072, RESELLER
 video.unrulymedia.com, 201313863, RESELLER
 voisetech.com, 1066, RESELLER
+
+monetrix.ai, 10761, RESELLER
+smaato.com, 1100059345, RESELLER, 07bcf65f187117b4
+start.io, 131192070, RESELLER
