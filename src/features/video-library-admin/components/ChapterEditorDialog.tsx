@@ -9,7 +9,7 @@ import {
 } from "../../../../components/ui/dialog";
 import { Button } from "../../../../components/ui/button";
 import { LANGUAGE_LABELS } from "../../../../data/constants";
-import { gTranslateFetch } from "../../../../utils/apiUtils";
+import { requestVideoTranslation } from "../services/videoTranslation";
 import { sortLocalesForVideoAdmin } from "../utils/videoAdminLocaleOrder";
 
 export type ChapterDraft = {
@@ -93,17 +93,21 @@ export default function ChapterEditorDialog({
     }
     setIsTranslating(true);
     setTranslateMessage("");
+    let activeLocale = "";
     try {
       const nextTitles: Record<string, string> = { ...draft.titles, ro: baseTitle };
       for (const locale of sortedLocales) {
         if (locale === "ro") continue;
-        const translated = await gTranslateFetch(baseTitle, locale);
-        nextTitles[locale] = translated || baseTitle;
+        activeLocale = locale;
+        const translated = await requestVideoTranslation(baseTitle, locale);
+        nextTitles[locale] = translated;
+        setDraft((prev) => ({ ...prev, titles: { ...prev.titles, [locale]: translated } }));
       }
       setDraft((prev) => ({ ...prev, titles: nextTitles, title: baseTitle }));
       setTranslateMessage("Gata.");
-    } catch {
-      setTranslateMessage("Eșuat.");
+    } catch (error) {
+      const language = LANGUAGE_LABELS[activeLocale]?.denumire || activeLocale;
+      setTranslateMessage(`Eșuat (${language}): ${error.message || "Serviciul de traducere nu este disponibil."} Traducerile reușite sunt păstrate.`);
     } finally {
       setIsTranslating(false);
     }
