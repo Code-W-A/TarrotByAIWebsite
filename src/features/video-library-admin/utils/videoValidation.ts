@@ -13,6 +13,8 @@ export const RO_VIDEO_URL_REQUIRED_MESSAGE =
   "Linkul video RO este obligatoriu — fără el videoclipul nu apare în app și pe site.";
 
 export type VideoValidationErrors = {
+  description?: string;
+  localeDescriptions?: Partial<Record<string, string>>;
   title?: string;
   platform?: string;
   localizedVideo?: string;

@@ -2,6 +2,8 @@
 
 Dashboardul are un singur selector Firebase / Sanity pentru descrierea generală și toate limbile. Videoclipurile vechi fără `descriptionStorage` folosesc Firebase; videoclipurile noi aleg Sanity implicit. Schimbarea selectorului păstrează toate textele în formular și se aplică numai la salvare. Backendul continuă să citească sursele mixte existente: editorul le încarcă integral și selectează Sanity dacă cel puțin o descriere folosește deja Sanity, apoi la salvare unifică toate sursele conform selectorului. Structura de stocare și răspunsurile API publice rămân compatibile.
 
+Fiecare descriere nouă sau modificată are maximum 6.000 de caractere Unicode (code points), inclusiv spațiile. Editorul afișează contorul pentru descrierea generală și în dialogul fiecărei limbi; depășirea blochează aplicarea/salvarea, fără trunchiere. Backendul validează aceeași regulă înaintea scrierilor. Textele vechi peste limită pot rămâne neschimbate la editarea altor câmpuri sau la schimbarea sursei; dacă sunt modificate, trebuie reduse la limită. Generarea localizărilor cere o descriere generală de maximum 6.000 de caractere, inclusiv pentru textele vechi. Limitele totale în bytes pentru Firestore și Sanity rămân active.
+
 ## Configurare
 
 - `SANITY_PROJECT_ID`, `SANITY_DATASET`, `SANITY_READ_TOKEN`: aceeași configurație de proiect/dataset privat folosită pentru ebookuri, fără dependență de `EBOOKS_ENABLED`.

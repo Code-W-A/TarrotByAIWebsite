@@ -1,5 +1,6 @@
 // @ts-nocheck
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { VIDEO_DESCRIPTION_MAX_CHARACTERS, videoDescriptionCharacterCount, videoDescriptionExceedsLimit, validateVideoDescriptionLimits } from "../../../../lib/videoDescriptionLimits";
 import { Timestamp } from "firebase/firestore";
 import { Pencil, Plus } from "lucide-react";
 import type { VideoCreateInput, VideoDoc, VideoLocales, VideoPlatform } from "../types/video";
@@ -142,6 +143,7 @@ function buildChaptersFromDrafts(drafts: ChapterDraft[]) {
 function pickGeneralErrors(all: VideoValidationErrors): VideoValidationErrors {
   const next: VideoValidationErrors = {};
   if (all.title) next.title = all.title;
+  if (all.description) next.description = all.description;
   if (all.platform) next.platform = all.platform;
   if (all.publicReleaseAt) next.publicReleaseAt = all.publicReleaseAt;
   if (all.thumbnailUrl) next.thumbnailUrl = all.thumbnailUrl;
@@ -235,6 +237,7 @@ export default function VideoForm({ initialValue, onCancel, onSubmit, loading = 
 
   const applyLocaleEdit = () => {
     if (!localeEditor || uiLocked) return;
+    if (localeEditor.field === "description" && videoDescriptionExceedsLimit(localeEditor.value, initialValue?.locales?.[localeEditor.locale]?.description)) return;
     const { locale, field, value } = localeEditor;
     const text = value.trim();
     manualLocaleFields.current[locale] = {
@@ -442,7 +445,8 @@ export default function VideoForm({ initialValue, onCancel, onSubmit, loading = 
     mergedLocales: VideoLocales,
     denormUrl: string
   ): VideoValidationErrors => {
-    const validation = validateVideoInput(buildValidationInput(mergedLocales, denormUrl));
+    const input = buildValidationInput(mergedLocales, denormUrl);
+    const validation = { ...validateVideoInput(input), ...validateVideoDescriptionLimits(input, initialValue || {}) };
     const releaseDraftError = validateVideoPublicReleaseDraft({
       accessMode,
       dateInput: publicReleaseDateInput,
@@ -556,6 +560,10 @@ export default function VideoForm({ initialValue, onCancel, onSubmit, loading = 
       setTranslateMessage("Completează titlul înainte de localizare.");
       return undefined;
     }
+    if (videoDescriptionExceedsLimit(form.description)) {
+      setTranslateMessage("Redu descrierea generală la maximum 6.000 de caractere înainte de generarea localizărilor. Textul nu a fost scurtat.");
+      return undefined;
+    }
     setIsTranslating(true);
     setTranslationFailed(false);
     setTranslateMessage("");
@@ -604,6 +612,12 @@ export default function VideoForm({ initialValue, onCancel, onSubmit, loading = 
     setSubmitting(true);
     try {
       const mergedLocales = buildMergedLocales(localesToSubmit);
+      const descriptionErrors = validateVideoDescriptionLimits({ ...form, locales: mergedLocales }, initialValue || {});
+      if (hasErrors(descriptionErrors)) {
+        setErrors(descriptionErrors);
+        setActiveTab(descriptionErrors.description ? "general" : "localization");
+        return;
+      }
       const denormUrl = deriveRootVideoUrlFromLocales(mergedLocales, ROOT_PREF);
       const chapters = buildChaptersFromDrafts(chapterDrafts);
       const payload = {
@@ -1029,7 +1043,19 @@ export default function VideoForm({ initialValue, onCancel, onSubmit, loading = 
                   disabled={uiLocked}
                   className="mt-1.5 min-h-[480px] max-h-[min(70vh,720px)] w-full resize-y overflow-y-auto rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm leading-relaxed text-gray-900 shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:bg-gray-50 disabled:text-gray-500 disabled:opacity-70"
                   placeholder="Scurtă descriere..."
+                  aria-describedby="video-description-count"
+                  aria-invalid={videoDescriptionExceedsLimit(form.description, initialValue?.description)}
                 />
+                <p id="video-description-count" className="mt-1 text-xs text-gray-600">
+                  {videoDescriptionCharacterCount(form.description).toLocaleString("ro-RO")} / 6.000 de caractere (inclusiv spațiile)
+                </p>
+                {videoDescriptionCharacterCount(form.description) > VIDEO_DESCRIPTION_MAX_CHARACTERS ? (
+                  <p role="alert" className="mt-1 text-xs text-red-600">
+                    {videoDescriptionExceedsLimit(form.description, initialValue?.description)
+                      ? "Descrierea modificată depășește limita de 6.000 de caractere."
+                      : "Descriere existentă peste limită. Dacă o modifici, redu textul la maximum 6.000 de caractere."}
+                  </p>
+                ) : null}
                 <label className="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-600">
                   Salvarea tuturor descrierilor
                   <select
@@ -1170,6 +1196,9 @@ export default function VideoForm({ initialValue, onCancel, onSubmit, loading = 
           {activeTab === "localization" ? (
             <div>
               <label className="text-sm font-medium text-gray-700">Localizare</label>
+              {Object.entries(errors.localeDescriptions || {}).map(([locale, message]) => (
+                <p key={locale} role="alert" className="mt-1 text-xs text-red-600">{message}</p>
+              ))}
               <div className="mt-2 flex flex-wrap items-center gap-3">
                 <Button
                   type="button"
@@ -1351,16 +1380,26 @@ export default function VideoForm({ initialValue, onCancel, onSubmit, loading = 
                 id="locale-editor-value"
                 autoFocus
                 rows={8}
+                aria-describedby="locale-description-count"
+                aria-invalid={videoDescriptionExceedsLimit(localeEditor?.value, initialValue?.locales?.[localeEditor?.locale]?.description)}
                 className="mt-2 w-full resize-y rounded-md border border-gray-300 px-3 py-2 text-sm"
                 value={localeEditor?.value || ""}
                 disabled={uiLocked}
                 onChange={(event) => setLocaleEditor((prev) => prev ? { ...prev, value: event.target.value } : null)}
               />
             )}
+            {localeEditor?.field === "description" ? (
+              <div id="locale-description-count" className="mt-1 text-xs text-gray-600">
+                <p>{videoDescriptionCharacterCount(localeEditor.value).toLocaleString("ro-RO")} / 6.000 de caractere (inclusiv spațiile)</p>
+                {videoDescriptionCharacterCount(localeEditor.value) > VIDEO_DESCRIPTION_MAX_CHARACTERS ? (
+                  <p role="alert" className="mt-1 text-red-600">Descriere peste limită. La modificare, textul trebuie redus la maximum 6.000 de caractere. Textul nu a fost scurtat.</p>
+                ) : null}
+              </div>
+            ) : null}
           </div>
           <DialogFooter className="flex-wrap">
             <Button type="button" variant="outline" disabled={uiLocked} onClick={() => setLocaleEditor(null)}>Anulează</Button>
-            <Button type="button" disabled={uiLocked} onClick={applyLocaleEdit}>Aplică</Button>
+            <Button type="button" disabled={uiLocked || (localeEditor?.field === "description" && videoDescriptionExceedsLimit(localeEditor.value, initialValue?.locales?.[localeEditor.locale]?.description))} onClick={applyLocaleEdit}>Aplică</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

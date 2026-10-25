@@ -189,3 +189,45 @@ it('keeps existing fields on failure, exposes progress, and resumes without retr
   const saved = await submit();
   expect(saved.locales.en).toEqual({ title: 'en: Titlu RO', description: 'en: Descriere RO', videoUrl: video.videoUrl });
 });
+
+it('counts Unicode characters and blocks an oversized localized edit without truncating it', async () => {
+  await render(); await click(button('Localizare'));
+  await click(fieldButton('descrierea', 'en'));
+  await changeEditor('🙂'.repeat(6001));
+  expect(document.getElementById('locale-editor-value').value).toBe('🙂'.repeat(6001));
+  expect(document.getElementById('locale-description-count').textContent).toContain('6.001 / 6.000');
+  expect(button('Aplică').disabled).toBe(true);
+  await changeEditor('🙂'.repeat(6000));
+  expect(button('Aplică').disabled).toBe(false);
+  await click(button('Aplică'));
+  expect((await submit()).locales.en.description).toBe('🙂'.repeat(6000));
+});
+
+it('blocks saving and translating a changed root description above 6000 characters', async () => {
+  await render();
+  const textarea = container.querySelector('textarea[placeholder="Scurtă descriere..."]');
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(textarea, 'a'.repeat(6001));
+    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  expect(textarea.value).toHaveLength(6001);
+  expect(container.querySelector('#video-description-count').textContent).toContain('6.001 / 6.000');
+  await act(async () => container.querySelector('form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
+  expect(onSubmit).not.toHaveBeenCalled();
+  expect(container.textContent).toContain('Descrierea modificată depășește limita');
+  await render({ ...video, description: 'a'.repeat(6001) });
+  await click(button('Localizare'));
+  await click(button('Generează localizări'));
+  expect(requestVideoTranslation).not.toHaveBeenCalled();
+  expect(container.textContent).toContain('înainte de generarea localizărilor');
+});
+
+it('allows unchanged legacy descriptions above the limit when editing other fields', async () => {
+  const description = 'x'.repeat(6001);
+  await render({ ...video, description, locales: { ro: { title: video.title, description, videoUrl: video.videoUrl } } });
+  expect(container.textContent).toContain('Descriere existentă peste limită');
+  await click(button('Localizare'));
+  const saved = await submit();
+  expect(saved.description).toBe(description);
+  expect(saved.locales.ro.description).toBe(description);
+});
