@@ -10,6 +10,7 @@ import type {
 } from "../types/video";
 import {
   createVideo,
+  loadVideoForEdit,
   deleteVideo,
   listVideosPage,
   listVideoCategories,
@@ -513,9 +514,16 @@ export default function VideoLibraryAdminScreen() {
     setShowForm(true);
   };
 
-  const handleEdit = (video: VideoDoc) => {
-    setEditingVideo(video);
-    setShowForm(true);
+  const handleEdit = async (video: VideoDoc) => {
+    setLoading(true);
+    setErrorMessage("");
+    try {
+      const complete = await loadVideoForEdit(video.id);
+      setEditingVideo(complete);
+      setShowForm(true);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Nu putem încărca descrierile videoclipului.");
+    } finally { setLoading(false); }
   };
 
   const closeForm = () => {
@@ -644,7 +652,7 @@ export default function VideoLibraryAdminScreen() {
           meta: { mode: editingVideo ? "edit" : "create" },
         }
       );
-      setErrorMessage("Salvarea a eșuat.");
+      setErrorMessage(error instanceof Error ? error.message : "Salvarea a eșuat.");
     } finally {
       setLoading(false);
     }

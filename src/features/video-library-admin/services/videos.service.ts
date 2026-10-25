@@ -9,10 +9,10 @@ import {
   limit,
   orderBy,
   query,
-  runTransaction,
   serverTimestamp,
   startAfter,
   updateDoc,
+  Timestamp,
 } from "firebase/firestore";
 import { db } from "../../../../firebase";
 import type {
@@ -24,7 +24,6 @@ import type {
 } from "../types/video";
 import { sortVideos } from "../utils/videoSorting";
 import { resolveVideoNotificationAt } from "../../../../lib/videoReleaseSchedule";
-import { normalizeVideoChapters } from "../../../../lib/videoChapters";
 
 const COLLECTION_NAME = "videosVideoModule";
 const CATEGORY_COLLECTION_NAME = "videoCategories";
@@ -34,7 +33,6 @@ const VIDEO_NOTIFICATION_STATE_SENT = "sent";
 const MAX_FEATURED_ON_HOME = 2;
 const videosCollection = collection(db, COLLECTION_NAME);
 const categoriesCollection = collection(db, CATEGORY_COLLECTION_NAME);
-const metaDocRef = doc(db, COLLECTION_NAME, "_meta");
 
 function slugifyText(text: string): string {
   if (!text || typeof text !== "string") return "";
@@ -112,80 +110,9 @@ const isPublishAtInFuture = (value: unknown, nowMs = Date.now()): boolean => {
   return Number.isFinite(publishAtMs) && Number(publishAtMs) > nowMs;
 };
 
-const hasOwn = <T extends object, K extends PropertyKey>(obj: T, key: K): obj is T & Record<K, unknown> =>
-  Object.prototype.hasOwnProperty.call(obj, key);
-
 const hasNotificationAlreadySent = (video: Partial<VideoDoc>): boolean => {
   if (video.notificationState === VIDEO_NOTIFICATION_STATE_SENT) return true;
   return video.notificationSentAt != null;
-};
-
-const shouldResetNotificationStateToPending = (
-  current: Partial<VideoDoc>,
-  next: VideoUpdateInput,
-  nextNotificationAt: unknown
-): boolean => {
-  const currentPublished = current.isPublished === true;
-  const nextPublished = hasOwn(next, "isPublished") ? next.isPublished === true : currentPublished;
-  if (!nextPublished) return false;
-  if (toMillisOrNull(nextNotificationAt) == null) return false;
-
-  const currentNotificationAtMs = toMillisOrNull(
-    current.notificationAt ?? resolveVideoNotificationAt(current)
-  );
-  const nextNotificationAtMs = toMillisOrNull(nextNotificationAt);
-  const scheduleChanged = currentNotificationAtMs !== nextNotificationAtMs;
-
-  // Match articles: never rebroadcast if already sent unless the notify moment moved.
-  if (hasNotificationAlreadySent(current) && !scheduleChanged) {
-    return false;
-  }
-
-  if (nextPublished && !currentPublished) {
-    return true;
-  }
-
-  if (
-    !hasOwn(next, "publishAt") &&
-    !hasOwn(next, "publicReleaseAt") &&
-    !hasOwn(next, "notificationAt")
-  ) {
-    return false;
-  }
-
-  return scheduleChanged;
-};
-
-const getNextOrder = async (): Promise<number> => {
-  const metaSnapshot = await getDoc(metaDocRef);
-  if (metaSnapshot.exists()) {
-    return await runTransaction(db, async (tx) => {
-      const metaSnap = await tx.get(metaDocRef);
-      const lastOrder = metaSnap.data()?.lastOrder;
-      const nextOrder = typeof lastOrder === "number" ? lastOrder + 1 : 1;
-      tx.set(metaDocRef, { lastOrder: nextOrder }, { merge: true });
-      return nextOrder;
-    });
-  }
-
-  const lastOrderQuery = query(videosCollection, orderBy("order", "desc"), limit(1));
-  const lastSnap = await getDocs(lastOrderQuery);
-  const lastDoc = lastSnap.docs[0];
-  const lastOrder = lastDoc?.data()?.order;
-  const baseOrder = typeof lastOrder === "number" ? lastOrder : 0;
-
-  return await runTransaction(db, async (tx) => {
-    const metaSnap = await tx.get(metaDocRef);
-    if (metaSnap.exists()) {
-      const existingOrder = metaSnap.data()?.lastOrder;
-      const nextOrder = typeof existingOrder === "number" ? existingOrder + 1 : baseOrder + 1;
-      tx.set(metaDocRef, { lastOrder: nextOrder }, { merge: true });
-      return nextOrder;
-    }
-    const nextOrder = baseOrder + 1;
-    tx.set(metaDocRef, { lastOrder: nextOrder }, { merge: true });
-    return nextOrder;
-  });
 };
 
 export async function listVideos(): Promise<VideoDoc[]> {
@@ -259,68 +186,43 @@ export async function listVideosPage(
   return { items, nextCursor, hasNextPage };
 }
 
-export async function createVideo(input: VideoCreateInput): Promise<VideoDoc> {
-  if (isFeaturedOnHomeSlotCandidate({ ...input, isPublished: input.isPublished === true })) {
-    await assertFeaturedOnHomeLimit();
+async function videoAdminRequest(path: string, options: RequestInit = {}) {
+  const token = window.localStorage.getItem("dashboard_access_token");
+  const response = await fetch(path, {
+    ...options,
+    headers: { "Content-Type": "application/json", ...(token ? { "X-Dashboard-Access": token } : {}), ...options.headers },
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body.error || "Operația video a eșuat.");
+  return body;
+}
+
+export async function loadVideoForEdit(id: string): Promise<VideoDoc> {
+  const { video } = await videoAdminRequest(`/api/admin/videos?id=${encodeURIComponent(id)}`);
+  for (const key of ["createdAt", "updatedAt", "publishAt", "publicReleaseAt", "notificationAt", "notificationSentAt"]) {
+    const value = video[key];
+    if (value && typeof value === "object") video[key] = new Timestamp(value.seconds ?? value._seconds, value.nanoseconds ?? value._nanoseconds ?? 0);
   }
-  const nextOrder = input.order ?? (await getNextOrder());
-  const isPublished = !!input.isPublished;
-  const notificationAt = resolveVideoNotificationAt(input);
-  const payload = {
-    ...input,
-    chapters: normalizeVideoChapters(input.chapters, { locale: "ro", includeLocales: true }),
-    isPublished,
-    notificationAt,
-    notificationState:
-      isPublished && notificationAt
-        ? VIDEO_NOTIFICATION_STATE_PENDING
-        : VIDEO_NOTIFICATION_STATE_SENT,
-    notificationSentAt: null,
-    order: nextOrder,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  };
-  const ref = await addDoc(videosCollection, payload);
-  await rebuildPublicCacheAfterMutation("create");
-  return { id: ref.id, ...(payload as Omit<VideoDoc, "id">) } as VideoDoc;
+  return video;
+}
+
+async function saveVideoThroughApi(input: VideoUpdateInput, videoId?: string): Promise<string> {
+  const { mutationId, editRevision, ...fields } = input;
+  const result = await videoAdminRequest("/api/admin/videos", {
+    method: "POST",
+    body: JSON.stringify({ videoId, input: fields, mutationId: mutationId || crypto.randomUUID(), expectedRevision: editRevision }),
+  });
+  if (result.cacheWarning) throw new VideoCacheRefreshError();
+  return result.id;
+}
+
+export async function createVideo(input: VideoCreateInput): Promise<VideoDoc> {
+  const id = await saveVideoThroughApi(input);
+  return { ...input, id, createdAt: null } as VideoDoc;
 }
 
 export async function updateVideo(id: string, data: VideoUpdateInput): Promise<void> {
-  const ref = doc(db, COLLECTION_NAME, id);
-  const snapshot = await getDoc(ref);
-  const current = snapshot.exists() ? ((snapshot.data() as Partial<VideoDoc>) ?? {}) : {};
-  const nextVideo = {
-    ...current,
-    ...data,
-    id,
-    isPublished: hasOwn(data, "isPublished") ? data.isPublished === true : current.isPublished === true,
-    featuredOnHome: hasOwn(data, "featuredOnHome")
-      ? data.featuredOnHome === true
-      : current.featuredOnHome === true,
-  };
-  const notificationAt = resolveVideoNotificationAt(nextVideo);
-  if (isFeaturedOnHomeSlotCandidate(nextVideo)) {
-    await assertFeaturedOnHomeLimit(id);
-  }
-  const updatePayload: Record<string, unknown> = {
-    ...data,
-    ...(hasOwn(data, "chapters")
-      ? { chapters: normalizeVideoChapters(data.chapters, { locale: "ro", includeLocales: true }) }
-      : {}),
-    notificationAt,
-    updatedAt: serverTimestamp(),
-  };
-  if (nextVideo.isPublished === true && toMillisOrNull(notificationAt) == null) {
-    updatePayload.notificationState = VIDEO_NOTIFICATION_STATE_SENT;
-  } else if (shouldResetNotificationStateToPending(current, data, notificationAt)) {
-    updatePayload.notificationState = VIDEO_NOTIFICATION_STATE_PENDING;
-    updatePayload.notificationSentAt = null;
-  } else if (hasOwn(data, "isPublished") && data.isPublished === false) {
-    // Keep notificationSentAt so republish does not rebroadcast.
-    updatePayload.notificationState = VIDEO_NOTIFICATION_STATE_SENT;
-  }
-  await updateDoc(ref, updatePayload);
-  await rebuildPublicCacheAfterMutation("update");
+  await saveVideoThroughApi(data, id);
 }
 
 export async function deleteVideo(id: string): Promise<void> {

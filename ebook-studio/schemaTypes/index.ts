@@ -1,6 +1,7 @@
 import { defineType, defineField } from "sanity";
 import { languages } from "./languages";
 import { EbookBookInput } from "../components/EbookBookInput";
+import { videoDescriptionVersion } from './videoDescriptionVersion';
 export { languages } from "./languages";
 const link = {
   name: "link",
@@ -174,4 +175,4 @@ const ebookEdition = defineType({
   ],
   preview: { select: { title: "title", subtitle: "language" } },
 });
-export const schemas = [ebook, ebookEdition];
+export const schemas = [ebook, ebookEdition, videoDescriptionVersion];

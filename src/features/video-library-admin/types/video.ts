@@ -30,7 +30,16 @@ export type VideoSortField =
 
 export type VideoSortDirection = "asc" | "desc";
 
+export type VideoDescriptionStorage = {
+  version: 1;
+  root: "firebase" | "sanity";
+  locales: Record<string, "firebase" | "sanity">;
+  sanityId?: string | null;
+};
+
 export type VideoDoc = {
+  descriptionStorage?: VideoDescriptionStorage;
+  editRevision?: string;
   id: string;
   title: string;
   description?: string;
@@ -66,6 +75,9 @@ export type VideoCategoryDoc = {
 };
 
 export type VideoCreateInput = {
+  descriptionStorage?: VideoDescriptionStorage;
+  editRevision?: string;
+  mutationId?: string;
   title: string;
   description?: string;
   platform: VideoPlatform;

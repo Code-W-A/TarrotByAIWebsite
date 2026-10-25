@@ -70,7 +70,7 @@ export default defineConfig({
   schema: {
     types: schemas,
     templates: (prev) => [
-      ...prev,
+      ...prev.filter(template => template.id !== 'videoDescriptionVersion'),
       {
         id: "edition",
         title: "Ediție",
@@ -94,7 +94,7 @@ export default defineConfig({
     ],
   },
   document: {
-    actions: (prev, context) =>
+    actions: (prev, context) => context.schemaType === 'videoDescriptionVersion' ? [] :
       getEbookDocumentActions(prev, context, DeleteEbookAction, PreviewAction),
   },
 });

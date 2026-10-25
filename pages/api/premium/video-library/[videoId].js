@@ -1,3 +1,4 @@
+import { resolveDescriptions } from "../../../../lib/videoDescriptionStorage.cjs";
 import { getOptionalAuth } from "../../../../lib/requireAuth";
 import { normalizeLocale, readSingleQueryValue } from "../../../../lib/courses";
 import { setDynamicPublicCacheHeaders } from "../../../../lib/httpCache";
@@ -177,8 +178,9 @@ async function handler(req, res) {
       getVideoLikeSummary(rawId, uid),
       getVideoCommentCount(rawId),
     ]);
+    const [completeTarget] = await resolveDescriptions([targetRow]);
     const video = {
-      ...mapVideoRowToPublicDto(targetRow, ctx),
+      ...mapVideoRowToPublicDto(completeTarget, ctx),
       likesCount: videoLikeSummary.likesCount,
       likedByCurrentUser: videoLikeSummary.likedByCurrentUser,
       commentsCount,

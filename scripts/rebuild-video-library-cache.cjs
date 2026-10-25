@@ -53,6 +53,7 @@ async function main() {
       const source = await db.collection('videosVideoModule').where('isPublished', '==', true).get();
       rows = source.docs.filter(doc => !['_meta', '_publicCache'].includes(doc.id))
         .map(doc => ({ ...doc.data(), id: doc.id }));
+      rows = await require('../lib/videoDescriptionStorage.cjs').resolveDescriptions(rows);
       const sorted = sortVideoDocsForPublic(rows);
       const generation = require('node:crypto').randomUUID();
       const prepared = cache.prepareGeneration(sorted, generation, new Date());

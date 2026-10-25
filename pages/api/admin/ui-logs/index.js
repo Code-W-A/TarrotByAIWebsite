@@ -160,7 +160,7 @@ export default async function handler(req, res) {
 
   if (req.method === "POST") {
     const payload = sanitizeIncomingPayload(req.body || {});
-    if (payload.error) {
+    if (typeof payload.error === 'string') {
       return res.status(400).json({ error: payload.error });
     }
     try {
