@@ -1,9 +1,11 @@
 import { resolveDescriptions } from "../../../../lib/videoDescriptionStorage.cjs";
+import { createSubtitlePlayback } from "../../../../lib/bunnySubtitles.cjs";
 import { getOptionalAuth } from "../../../../lib/requireAuth";
 import { normalizeLocale, readSingleQueryValue } from "../../../../lib/courses";
 import { setDynamicPublicCacheHeaders } from "../../../../lib/httpCache";
 import {
   resolveRowVideoSourceWithMeta,
+  extractBunnyEmbedParts,
   rowHasDirectValidEmbedForLocale,
   rowHasValidEmbedForLocale,
 } from "../../../../lib/videoLibraryPublic";
@@ -185,6 +187,17 @@ async function handler(req, res) {
       likedByCurrentUser: videoLikeSummary.likedByCurrentUser,
       commentsCount,
     };
+
+    // Opt-in detail enrichment only; lists, web and legacy clients retain their DTOs.
+    if (!webClient && req.query.nativeSubtitles === "1" && video.platform === "bunny" && video.canPlay && !video.lockedReason) {
+      try {
+        const subtitleHlsSrc = await createSubtitlePlayback(video, extractBunnyEmbedParts(video.videoUrl));
+        if (subtitleHlsSrc) video.subtitleHlsSrc = subtitleHlsSrc;
+      } catch (_) {
+        video.subtitlesUnavailable = true;
+        console.warn('[video-subtitles] metadata_unavailable', { videoId: rawId, requestId });
+      }
+    }
 
     const catTrim = typeof video.category === "string" ? video.category.trim() : "";
     const relatedRows = catTrim
