@@ -24,6 +24,23 @@ it('preserves the legacy response and optional quality', async () => {
   expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ translation: 'Bonjour', trans: 'Bonjour', provider: 'rapidapi' }));
   expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({ from: 'auto', to: 'fr', text: 'Bună' });
 });
+it('reports the real RapidAPI gateway timeout and its plural messages field', async () => {
+  fetch.mockResolvedValue({ ok: false, status: 504, headers: { get: () => null }, json: async () => ({
+    messages: 'The request to the API has timed out.',
+  }) });
+  const res = await run({ text: 'Titlu scurt', target: 'sq', source: 'ro', quality: 'nmt' });
+  expect(res.status).toHaveBeenCalledWith(504);
+  expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+    code: 'TRANSLATION_TIMEOUT', details: 'The request to the API has timed out.',
+  }));
+});
+it('gives an explicit availability error when the provider supplies no details', async () => {
+  fetch.mockResolvedValue({ ok: false, status: 503, headers: { get: () => null }, json: async () => ({}) });
+  const res = await run({ text: 'Bună', target: 'en' });
+  expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+    error: 'Serviciul de traducere nu este disponibil. Reîncearcă mai târziu.', details: null,
+  }));
+});
 it('aborts the provider after 30 seconds', async () => {
   jest.useFakeTimers();
   fetch.mockImplementation((_url, { signal }) => new Promise((_resolve, reject) => signal.addEventListener('abort', () => reject(new Error('timeout')))));

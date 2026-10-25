@@ -58,13 +58,17 @@ export default async function handler(req, res) {
       "";
 
     if (!response.ok || !translated) {
-      const status = response.status === 413 ? 413 : response.status === 429 ? 429 : response.status >= 500 ? 503 : 502;
+      const status = response.status === 413 ? 413 : response.status === 429 ? 429 : response.status === 504 ? 504 : response.status >= 500 ? 503 : 502;
+      const providerDetail = [result?.message, result?.messages, result?.error]
+        .find(value => typeof value === "string" && value.trim());
       const retryAfter = response.headers?.get("Retry-After");
       if (retryAfter && /^[\w\s,:+.-]+$/.test(retryAfter)) res.setHeader("Retry-After", retryAfter);
       return res.status(status).json({
-        error: "Translation failed",
-        code: status === 413 ? "PAYLOAD_TOO_LARGE" : status === 429 ? "RATE_LIMITED" : "PROVIDER_UNAVAILABLE",
-        details: result?.message || result?.error || null,
+        error: status === 504 ? "Furnizorul de traduceri nu a răspuns la timp. Reîncearcă mai târziu." :
+          status === 429 ? "Limita serviciului de traducere a fost atinsă. Reîncearcă mai târziu." :
+          status === 413 ? "Textul depășește limita unei cereri de traducere." : "Serviciul de traducere nu este disponibil. Reîncearcă mai târziu.",
+        code: status === 413 ? "PAYLOAD_TOO_LARGE" : status === 429 ? "RATE_LIMITED" : status === 504 ? "TRANSLATION_TIMEOUT" : "PROVIDER_UNAVAILABLE",
+        details: providerDetail || null,
       });
     }
 
