@@ -51,23 +51,46 @@ afterEach(async () => { await act(async () => root.unmount()); container.remove(
 
 it('defaults old videos to Firebase and new videos to Sanity without changing their text', async () => {
   await render();
-  const source = container.querySelector('select[aria-label="Sursa descrierii generale"]');
+  const source = container.querySelector('select[aria-label="Sursa tuturor descrierilor"]');
   expect(source.value).toBe('firebase');
   await act(async () => { source.value = 'sanity'; source.dispatchEvent(new Event('change', { bubbles: true })); });
   expect(container.querySelector('textarea[placeholder="Scurtă descriere..."]').value).toBe(video.description);
   await click(button('Localizare'));
   await edit('descrierea', 'en', 'Unchanged full English');
-  const englishSource = container.querySelector('select[aria-label="Sursa descrierii (en)"]');
-  expect(englishSource.value).toBe('firebase');
-  await act(async () => { englishSource.value = 'sanity'; englishSource.dispatchEvent(new Event('change', { bubbles: true })); });
+  expect(container.querySelectorAll('select[aria-label^="Sursa descrierii ("]')).toHaveLength(0);
   const first = await submit(); const retry = await submit();
   expect(first.mutationId).toBe(retry.mutationId);
-  expect(first.descriptionStorage).toMatchObject({ root: 'sanity', locales: { en: 'sanity', ro: 'firebase' } });
+  expect(first.descriptionStorage).toMatchObject({ root: 'sanity', locales: { en: 'sanity', ro: 'sanity' } });
   expect(first.locales.en.description).toBe('Unchanged full English');
   await edit('descrierea', 'en', 'Changed English');
   expect((await submit()).mutationId).not.toBe(first.mutationId);
   await act(async () => root.render(<VideoForm onSubmit={onSubmit} onCancel={() => {}} />));
-  expect(container.querySelector('select[aria-label="Sursa descrierii generale"]').value).toBe('sanity');
+  expect(container.querySelector('select[aria-label="Sursa tuturor descrierilor"]').value).toBe('sanity');
+});
+
+it('consolidates hydrated mixed descriptions with one selector and preserves text in both directions', async () => {
+  await render({ ...video, locales: { en: { title: 'English', description: 'English from Sanity', videoUrl: video.videoUrl }, ro: { title: video.title, description: 'Română din Firebase', videoUrl: video.videoUrl } },
+    descriptionStorage: { version: 1, root: 'firebase', locales: { en: 'sanity', ro: 'firebase' }, sanityId: 'immutable-version' } });
+  const source = container.querySelector('select[aria-label="Sursa tuturor descrierilor"]');
+  expect(source.value).toBe('sanity');
+  expect(container.querySelectorAll('select[aria-label^="Sursa"]')).toHaveLength(1);
+  expect(onSubmit).not.toHaveBeenCalled();
+  await click(button('Localizare'));
+  const sanity = await submit();
+  expect(sanity.descriptionStorage).toMatchObject({ root: 'sanity', locales: { en: 'sanity', ro: 'sanity' } });
+  await click(button('General'));
+  const currentSource = container.querySelector('select[aria-label="Sursa tuturor descrierilor"]');
+  await act(async () => { currentSource.value = 'firebase'; currentSource.dispatchEvent(new Event('change', { bubbles: true })); });
+  await click(button('Localizare'));
+  const firebase = await submit();
+  expect(firebase.descriptionStorage).toMatchObject({ root: 'firebase', locales: { en: 'firebase', ro: 'firebase' } });
+  expect(firebase.description).toBe(video.description);
+  expect(firebase.locales).toEqual(sanity.locales);
+  expect(firebase.mutationId).not.toBe(sanity.mutationId);
+  expect(firebase.locales.en.description).toBe('English from Sanity');
+  expect(firebase.locales.ro.description).toBe('Română din Firebase');
+  await render({ ...video, ...firebase });
+  expect(container.querySelector('select[aria-label="Sursa tuturor descrierilor"]').value).toBe('firebase');
 });
 
 it('adds translations without generation, cancels drafts, and saves/reopens the same values', async () => {

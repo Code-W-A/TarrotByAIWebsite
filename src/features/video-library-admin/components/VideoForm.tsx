@@ -166,39 +166,19 @@ function hasErrors(errors: VideoValidationErrors): boolean {
   return Object.keys(errors).length > 0;
 }
 
-function initialDescriptionStorage(video) {
-  const fallback = video ? "firebase" : "sanity";
-  return {
-    version: 1,
-    root: video?.descriptionStorage?.root || fallback,
-    locales: Object.fromEntries(SITE_LOCALES.map(lc => [lc, video?.descriptionStorage?.locales?.[lc] || fallback])),
-  };
+function initialDescriptionSource(video) {
+  if (!video) return "sanity";
+  const storage = video.descriptionStorage;
+  // Previously mixed videos are fully hydrated by the editor API. Consolidate
+  // them into Sanity on save, keeping every description in the form meanwhile.
+  return storage?.root === "sanity" || Object.values(storage?.locales || {}).includes("sanity")
+    ? "sanity" : "firebase";
 }
 
 export default function VideoForm({ initialValue, onCancel, onSubmit, loading = false }: Props) {
   const isEditing = !!initialValue;
-  const [descriptionStorage, setDescriptionStorage] = useState(() => initialDescriptionStorage(initialValue));
+  const [descriptionSource, setDescriptionSource] = useState(() => initialDescriptionSource(initialValue));
   const submission = useRef({ signature: "", mutationId: "" });
-  const sourceSelector = (locale = null) => (
-    <label className="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-600">
-      Salvare descriere
-      <select
-        aria-label={locale ? `Sursa descrierii (${locale})` : "Sursa descrierii generale"}
-        value={locale ? descriptionStorage.locales[locale] : descriptionStorage.root}
-        disabled={uiLocked}
-        onChange={event => {
-          const value = event.target.value;
-          setDescriptionStorage(previous => locale
-            ? { ...previous, locales: { ...previous.locales, [locale]: value } }
-            : { ...previous, root: value });
-        }}
-        className="rounded border border-gray-300 bg-white px-2 py-1 text-sm"
-      >
-        <option value="firebase">Firebase</option>
-        <option value="sanity">Sanity</option>
-      </select>
-    </label>
-  );
   const [activeTab, setActiveTab] = useState<FormTab>("general");
   const [form, setForm] = useState<VideoCreateInput>({
     title: "",
@@ -305,7 +285,7 @@ export default function VideoForm({ initialValue, onCancel, onSubmit, loading = 
 
   useEffect(() => {
     setActiveTab("general");
-    setDescriptionStorage(initialDescriptionStorage(initialValue));
+    setDescriptionSource(initialDescriptionSource(initialValue));
     submission.current = { signature: "", mutationId: "" };
     translationController.current?.abort();
     translationController.current = null;
@@ -628,7 +608,11 @@ export default function VideoForm({ initialValue, onCancel, onSubmit, loading = 
       const chapters = buildChaptersFromDrafts(chapterDrafts);
       const payload = {
         ...form,
-        descriptionStorage,
+        descriptionStorage: {
+          version: 1,
+          root: descriptionSource,
+          locales: Object.fromEntries(Object.keys(mergedLocales || {}).map(lc => [lc, descriptionSource])),
+        },
         editRevision: initialValue?.editRevision,
         isPremium: accessMode !== VIDEO_ACCESS_MODE_FREE,
         publicReleaseAt:
@@ -1046,7 +1030,22 @@ export default function VideoForm({ initialValue, onCancel, onSubmit, loading = 
                   className="mt-1.5 min-h-[480px] max-h-[min(70vh,720px)] w-full resize-y overflow-y-auto rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm leading-relaxed text-gray-900 shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:bg-gray-50 disabled:text-gray-500 disabled:opacity-70"
                   placeholder="Scurtă descriere..."
                 />
-                {sourceSelector()}
+                <label className="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-600">
+                  Salvarea tuturor descrierilor
+                  <select
+                    aria-label="Sursa tuturor descrierilor"
+                    value={descriptionSource}
+                    disabled={uiLocked}
+                    onChange={event => setDescriptionSource(event.target.value)}
+                    className="rounded border border-gray-300 bg-white px-2 py-1 text-sm"
+                  >
+                    <option value="sanity">Sanity</option>
+                    <option value="firebase">Firebase</option>
+                  </select>
+                </label>
+                <p className="mt-1 text-xs text-gray-500">
+                  Se aplică descrierii generale și tuturor limbilor numai la salvarea videoclipului. Textele sunt păstrate la schimbarea sursei.
+                </p>
               </div>
 
               <div className="grid grid-cols-1 gap-2">
@@ -1257,7 +1256,6 @@ export default function VideoForm({ initialValue, onCancel, onSubmit, loading = 
                                       {value ? <Pencil className="h-3.5 w-3.5" aria-hidden="true" /> : <Plus className="h-4 w-4" aria-hidden="true" />}
                                     </Button>
                                   </div>
-                                  {field === "description" ? sourceSelector(lc) : null}
                                 </td>
                               );
                             })}

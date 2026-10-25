@@ -1,6 +1,6 @@
 # Descrieri video Firebase / Sanity
 
-Dashboardul păstrează câte un text și o sursă pentru descrierea generală și pentru fiecare limbă. Videoclipurile vechi fără `descriptionStorage` folosesc Firebase; videoclipurile noi aleg Sanity implicit. Schimbarea selectorului păstrează textul în formular și se aplică numai la salvare.
+Dashboardul are un singur selector Firebase / Sanity pentru descrierea generală și toate limbile. Videoclipurile vechi fără `descriptionStorage` folosesc Firebase; videoclipurile noi aleg Sanity implicit. Schimbarea selectorului păstrează toate textele în formular și se aplică numai la salvare. Backendul continuă să citească sursele mixte existente: editorul le încarcă integral și selectează Sanity dacă cel puțin o descriere folosește deja Sanity, apoi la salvare unifică toate sursele conform selectorului. Structura de stocare și răspunsurile API publice rămân compatibile.
 
 ## Configurare
 
