@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { isAdsenseEnabled } from "../../lib/ads/config";
+import { getPublicAdsenseSlot, isAdsenseEnabled } from "../../lib/ads/config";
 import GoogleAdSenseBanner from "./GoogleAdSenseBanner";
-import GoogleAdSenseScript from "./GoogleAdSenseScript";
 import { useAdsConsent } from "./useAdsConsent";
 
 export default function ArticleAdSense({ article, locale }) {
@@ -9,7 +8,7 @@ export default function ArticleAdSense({ article, locale }) {
   const [nearViewport, setNearViewport] = useState(false);
   const { hasConsent } = useAdsConsent();
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT_ID?.trim();
-  const slot = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_ARTICLE_SLOT_ID?.trim();
+  const slot = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_ARTICLE_SLOT_ID?.trim() || getPublicAdsenseSlot();
   // Match the article's existing locale selection, including its legacy aliases.
   const content = locale === "hi" ? article?.info?.hu?.content
     : locale === "id" ? article?.info?.ru?.content
@@ -17,8 +16,7 @@ export default function ArticleAdSense({ article, locale }) {
   const hasText = typeof content === "string" && Boolean(
     content.replace(/<[^>]*>/g, "").replace(/&nbsp;|&#160;|\u00a0/g, " ").trim()
   );
-  const enabled = process.env.NEXT_PUBLIC_ENABLE_ARTICLE_ADSENSE === "true" &&
-    isAdsenseEnabled() && Boolean(clientId && slot && article && hasText);
+  const enabled = isAdsenseEnabled() && Boolean(clientId && slot && article && hasText);
 
   useEffect(() => {
     if (!enabled || !containerRef.current) return undefined;
@@ -42,7 +40,6 @@ export default function ArticleAdSense({ article, locale }) {
         <div style={{ height: 30, fontSize: 12, color: "#64748b", textAlign: "center" }}>
           Publicitate
         </div>
-        <GoogleAdSenseScript clientId={clientId} shouldLoad={shouldRequest} />
         <GoogleAdSenseBanner
           slot={slot}
           shouldRequest={shouldRequest}

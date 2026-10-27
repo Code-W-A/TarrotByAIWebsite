@@ -1,14 +1,12 @@
-/**
- * AdSense is now scoped to `/main-dashboard` and is loaded directly from
- * `MainDashboardTopAd` (with its own 9s + interaction gate). All other public
- * routes use AdSterra via `AdPlacementShell`. There is therefore no global
- * AdSense script to manage from `_app.js`, so this provider intentionally
- * renders nothing.
- *
- * Kept as a thin component so existing `<AdsProviderScripts />` mount points
- * remain stable; if a future route needs global AdSense Auto Ads, re-add the
- * route-aware loader here.
- */
+import { useRouter } from "next/router";
+import { isAdsenseRouteEligible } from "../../lib/ads/config";
+import GoogleAdSenseScript from "./GoogleAdSenseScript";
+import { useAdsConsent } from "./useAdsConsent";
+
+// One script owner for all placements, including client-side navigation.
 export default function AdsProviderScripts() {
-  return null;
+  const router = useRouter();
+  const { hasConsent } = useAdsConsent();
+  return <GoogleAdSenseScript clientId={process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT_ID}
+    shouldLoad={process.env.NODE_ENV === "production" && hasConsent && isAdsenseRouteEligible(router.pathname)} />;
 }

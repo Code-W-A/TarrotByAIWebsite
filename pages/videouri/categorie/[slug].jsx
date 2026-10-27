@@ -13,7 +13,6 @@ import { useAuth } from "../../../context/AuthContext";
 import { isVideoPlayableForUser, isVideoAppOnlyLocked } from "../../../lib/videoLibraryClientUtils";
 import { resolveUiLocale } from "../../../lib/siteLocales";
 import { getFirebaseBearerHeader } from "../../../utils/firebaseAuthHeaders";
-import GoogleAdSenseScript from "../../../components/Ads/GoogleAdSenseScript";
 import GoogleAdSenseBanner from "../../../components/Ads/GoogleAdSenseBanner";
 import { isAdsenseEnabled } from "../../../lib/ads/config";
 import VideoLibraryFiltersToolbar from "../../../components/VideoLibrary/VideoLibraryFiltersToolbar";
@@ -376,8 +375,6 @@ export default function VideoCategoryPage({ category }) {
   );
 
   const channelName = t("videoLibraryChannelName");
-  const adsenseClientId = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT_ID || "";
-  const canLoadAdsense = isAdsenseEnabled() && Boolean(adsenseClientId);
 
   const filtersToolbar = (
     <VideoLibraryFiltersToolbar
@@ -395,7 +392,6 @@ export default function VideoCategoryPage({ category }) {
 
   return (
     <>
-      <GoogleAdSenseScript clientId={adsenseClientId} shouldLoad={canLoadAdsense} />
       <Head>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDesc} />

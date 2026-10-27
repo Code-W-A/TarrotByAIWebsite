@@ -3,18 +3,21 @@ import React, { act } from "react";
 import { createRoot } from "react-dom/client";
 import ArticleAdSense from "../../components/Ads/ArticleAdSense";
 
+import AdsProviderScripts from "../../components/Ads/AdsProviderScripts";
+jest.mock("next/router", () => ({ useRouter: () => ({ pathname: "/news/[slug]" }) }));
+
 let root, container, intersect, push, rectSpy;
 const originalEnv = process.env;
 const article = { info: { ro: { content: "<p>Text articol</p>" } } };
 const render = async (props = {}, key = "a") => {
-  await act(async () => root.render(<ArticleAdSense key={key} article={article} locale="ro" {...props} />));
+  await act(async () => root.render(<><AdsProviderScripts /><ArticleAdSense key={key} article={article} locale="ro" {...props} /></>));
 };
 const approach = async () => act(async () => intersect([{ isIntersecting: true }]));
 
 beforeEach(() => {
   global.IS_REACT_ACT_ENVIRONMENT = true;
   process.env = { ...originalEnv, NODE_ENV: "production", NEXT_PUBLIC_ENABLE_ADSENSE: "true",
-    NEXT_PUBLIC_ENABLE_ARTICLE_ADSENSE: "true", NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT_ID: "test-client",
+    NEXT_PUBLIC_GOOGLE_ADSENSE_PUBLIC_SLOT_ID: "", NEXT_PUBLIC_GOOGLE_ADSENSE_MAIN_DASHBOARD_SLOT_ID: "", NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT_ID: "test-client",
     NEXT_PUBLIC_GOOGLE_ADSENSE_ARTICLE_SLOT_ID: "test-slot", NEXT_PUBLIC_ADS_CONSENT_REQUIRED: "false" };
   global.IntersectionObserver = jest.fn(function (callback) {
     intersect = callback;
@@ -43,8 +46,6 @@ afterEach(async () => {
 });
 
 it.each([
-  ["NEXT_PUBLIC_ENABLE_ARTICLE_ADSENSE", undefined],
-  ["NEXT_PUBLIC_ENABLE_ARTICLE_ADSENSE", "false"],
   ["NEXT_PUBLIC_ENABLE_ADSENSE", "false"],
   ["NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT_ID", ""],
   ["NEXT_PUBLIC_GOOGLE_ADSENSE_ARTICLE_SLOT_ID", ""],
@@ -64,7 +65,7 @@ it("reserves space, requests near viewport once, and requests anew on article na
   expect(container.querySelector("aside").style.padding).toBe("32px 0px");
   expect(container.querySelector("ins").style.height).toBe("250px");
   expect(container.textContent).toBe("Publicitate");
-  expect(document.getElementById("google-adsense")).toBeNull();
+  expect(document.getElementById("google-adsense")).not.toBeNull();
   await approach(); expect(push).toHaveBeenCalledTimes(1);
   await render(); await approach(); expect(push).toHaveBeenCalledTimes(1);
   await render({}, "b"); expect(push).toHaveBeenCalledTimes(1);
@@ -88,4 +89,12 @@ it("never requests live ads in development", async () => {
   process.env.NODE_ENV = "development";
   await render(); await approach(); expect(push).not.toHaveBeenCalled();
   expect(document.getElementById("google-adsense")).toBeNull();
+});
+
+it("uses the shared slot when no dedicated article slot is configured", async () => {
+  process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_ARTICLE_SLOT_ID = "";
+  process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_MAIN_DASHBOARD_SLOT_ID = "shared-slot";
+  await render(); await approach();
+  expect(container.querySelector("ins").dataset.adSlot).toBe("shared-slot");
+  expect(push).toHaveBeenCalledTimes(1);
 });

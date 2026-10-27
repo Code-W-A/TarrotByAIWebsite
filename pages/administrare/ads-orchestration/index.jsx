@@ -160,7 +160,7 @@ export default function AdsOrchestrationDashboardPage() {
                   <li>Max 3 sloturi/pagină; chei distincte; placementId=&quot;native&quot; pentru doar native.</li>
                   <li>Fără Popunder / Social Bar în panou Adsterra.</li>
                   <li>Production: reclama după 4 secunde pe pagină (fără scroll/cookies/limită sesiune).</li>
-                  <li>AdSense rulează doar pe /main-dashboard, paralel cu AdSterra pe restul rutelor.</li>
+                  <li>AdSense este folosit pe paginile publice; configurația Adsterra de mai sus este inactivă.</li>
                   <li>Excluderi: abonament, meeting, settings, checkout cursuri.</li>
                 </ul>
               </div>

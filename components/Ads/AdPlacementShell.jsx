@@ -1,106 +1,39 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
-import {
-  getAdsterraPlacementConfig,
-  isAdsterraEnabled,
-  isAdsterraRouteEligible,
-} from "../../lib/ads/config";
-import {
-  claimAdsterraSlot,
-  resetAdsterraPageRegistry,
-} from "../../lib/ads/adsterraRegistry";
-import { useAdsEngagementContext } from "./AdsEngagementContext";
-import { buildAdsterraIframeSrcDoc } from "./adsterraIframe";
+import { getPublicAdsenseSlot, isAdsenseEnabled, isAdsenseRouteEligible } from "../../lib/ads/config";
+import GoogleAdSenseBanner from "./GoogleAdSenseBanner";
 
-export default function AdPlacementShell({
-  placementId = "default",
-  className = "",
-}) {
-  const router = useRouter();
-  const pathname = router?.pathname || "/";
-  const enabled = isAdsterraEnabled();
-  const placement = useMemo(
-    () => getAdsterraPlacementConfig(placementId),
-    [placementId]
-  );
-  const { key, format, width, height } = placement;
-  const { canShowAdsterra, routeEligible } = useAdsEngagementContext();
-
-  const [slotClaimed, setSlotClaimed] = useState(false);
-
-  const iframeSrcDoc = useMemo(
-    () => (placement.host && key ? buildAdsterraIframeSrcDoc(placement) : ""),
-    [placement, key]
-  );
-
-  const iframeMinHeight =
-    format === "iframe" ? Math.max(60, Number(height) || 90) : 90;
-  const iframeMaxHeight =
-    format === "iframe" ? Math.max(iframeMinHeight, Number(height) || 320) : 320;
-
+function Placement({ placementId, className, slot }) {
+  const ref = useRef(null);
+  const [nearViewport, setNearViewport] = useState(false);
   useEffect(() => {
-    resetAdsterraPageRegistry();
-    setSlotClaimed(false);
-  }, [pathname]);
-
-  useEffect(() => {
-    if (!enabled || !key) return;
-    const claim = claimAdsterraSlot(key);
-    setSlotClaimed(claim.ok);
-  }, [enabled, key, pathname]);
-
-  const showIframe =
-    enabled &&
-    routeEligible &&
-    isAdsterraRouteEligible(pathname) &&
-    canShowAdsterra &&
-    slotClaimed &&
-    Boolean(iframeSrcDoc);
-
-  const showDevPlaceholder =
-    process.env.NODE_ENV === "development" &&
-    enabled &&
-    routeEligible &&
-    slotClaimed;
-
-  if (!enabled || !isAdsterraRouteEligible(pathname) || !slotClaimed) {
-    return null;
-  }
-
-  if (!showIframe && !showDevPlaceholder) {
-    return null;
-  }
-
+    if (!ref.current || typeof IntersectionObserver === "undefined") return undefined;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        setNearViewport(true);
+        observer.disconnect();
+      }
+    }, { rootMargin: "200px 0px" });
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
   return (
-    <aside
-      className={`my-8 flex w-full justify-center px-4 ${className}`.trim()}
-      aria-label="Publicitate"
-      data-adsterra-placement={placementId}
-      data-adsterra-format={format}
-    >
-      <div
-        className={`w-full overflow-hidden rounded-xl border border-gray-100/80 bg-gray-50/60 px-4 py-3 ${
-          format === "iframe" && width >= 600 ? "max-w-4xl" : "max-w-3xl"
-        }`}
-      >
-        <p className="sr-only">Publicitate</p>
-        {showIframe ? (
-          <iframe
-            title="Publicitate"
-            srcDoc={iframeSrcDoc}
-            sandbox="allow-scripts allow-same-origin"
-            className="adsterra-slot mx-auto block w-full border-0 bg-transparent"
-            style={{ minHeight: iframeMinHeight, maxHeight: iframeMaxHeight }}
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-          />
-        ) : (
-          <div
-            className="adsterra-native-banner min-h-[90px] w-full rounded-lg border border-dashed border-gray-200 bg-gray-50/50"
-            aria-hidden
-          />
-        )}
+    <aside ref={ref} className={`my-8 w-full px-4 ${className}`.trim()}
+      aria-label="Publicitate" data-adsense-placement={placementId} style={{ paddingTop: 32, paddingBottom: 32 }}>
+      <div className="mx-auto w-full max-w-4xl" style={{ minHeight: 280 }}>
+        <p className="text-center text-xs text-slate-500" style={{ height: 30, margin: 0 }}>Publicitate</p>
+        <GoogleAdSenseBanner slot={slot} shouldRequest={nearViewport} responsive={false}
+          style={{ height: 250, minHeight: 250 }} />
       </div>
     </aside>
   );
+}
+
+export default function AdPlacementShell({ placementId = "default", className = "" }) {
+  const router = useRouter();
+  const slot = getPublicAdsenseSlot();
+  if (!isAdsenseEnabled() || !isAdsenseRouteEligible(router.pathname) ||
+      !process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT_ID || !slot) return null;
+  return <Placement key={`${router.locale}:${router.asPath.split(/[?#]/)[0]}:${placementId}`}
+    placementId={placementId} className={className} slot={slot} />;
 }

@@ -12,7 +12,6 @@ import { useApiData } from "../../context/ApiContext";
 import { collection, doc, setDoc } from "firebase/firestore";
 import { db } from "../../firebase";
 import Footer from "../../components/Footer";
-import GoogleAdSenseScript from "../../components/Ads/GoogleAdSenseScript";
 import GoogleAdSenseBanner from "../../components/Ads/GoogleAdSenseBanner";
 import { isAdsenseEnabled } from "../../lib/ads/config";
 
@@ -85,7 +84,6 @@ function MainDashboardTopAd() {
 
   return (
     <>
-      <GoogleAdSenseScript clientId={clientId} shouldLoad={canRequestAd} />
       <div style={styles.adOuterWrap}>
         <div style={styles.adInnerWrap}>
           <p style={styles.adLabel}>Publicitate</p>

@@ -14,6 +14,7 @@ import { useEffect } from "react";
 import languageDetector from "../lib/languageDetector";
 import { resolveUiLocale } from "../lib/siteLocales";
 import LanguageSelectionDialog from "../components/LanguageSelectionDialog";
+import PublicPageAd from "../components/Ads/PublicPageAd";
 import AdsProviderScripts from "../components/Ads/AdsProviderScripts";
 import { AdsEngagementProvider } from "../components/Ads/AdsEngagementContext";
 import GoogleAnalytics from "../components/GoogleAnalytics";
@@ -233,6 +234,7 @@ function MyApp({ Component, pageProps }) {
                 <AdsEngagementProvider>
                   <PremiumPriceChangeBanner />
                   <Component {...pageProps} />
+                  <PublicPageAd />
                 </AdsEngagementProvider>
                 
                 <style jsx global>{`

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useAdsConsent } from "./useAdsConsent";
 import { isAdsenseEnabled } from "../../lib/ads/config";
 
 const ADS_DEBUG =
@@ -18,6 +19,7 @@ export default function GoogleAdSenseBanner({
   className = "",
   style,
 }) {
+  const { hasConsent } = useAdsConsent();
   const hasRequestedAd = useRef(false);
   const insRef = useRef(null);
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT_ID || "";
@@ -28,7 +30,7 @@ export default function GoogleAdSenseBanner({
       !adsenseEnabled ||
       !clientId ||
       !slot ||
-      !shouldRequest ||
+      !shouldRequest || !hasConsent || process.env.NODE_ENV !== "production" ||
       hasRequestedAd.current ||
       typeof window === "undefined"
     ) {
@@ -118,10 +120,11 @@ export default function GoogleAdSenseBanner({
       if (rafId) window.cancelAnimationFrame(rafId);
       if (statusTimer) window.clearTimeout(statusTimer);
       if (onScriptLoaded) {
+        script?.removeEventListener("load", onScriptLoaded);
         window.removeEventListener("adsense-script-loaded", onScriptLoaded);
       }
     };
-  }, [adsenseEnabled, clientId, requestStorageKey, shouldRequest, slot]);
+  }, [adsenseEnabled, clientId, hasConsent, requestStorageKey, shouldRequest, slot]);
 
   if (!adsenseEnabled) return null;
 

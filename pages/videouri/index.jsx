@@ -13,7 +13,6 @@ import { isVideoPlayableForUser, isVideoAppOnlyLocked } from "../../lib/videoLib
 import VideoLibraryFiltersToolbar from "../../components/VideoLibrary/VideoLibraryFiltersToolbar";
 import { resolveUiLocale } from "../../lib/siteLocales";
 import { getFirebaseBearerHeader } from "../../utils/firebaseAuthHeaders";
-import GoogleAdSenseScript from "../../components/Ads/GoogleAdSenseScript";
 import GoogleAdSenseBanner from "../../components/Ads/GoogleAdSenseBanner";
 import { isAdsenseEnabled } from "../../lib/ads/config";
 import {
@@ -268,15 +267,9 @@ export default function VideoLibraryPage() {
     />
   );
 
-  const adsenseClientId = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT_ID || "";
-  const canLoadAdsense = isAdsenseEnabled() && Boolean(adsenseClientId);
 
   return (
     <>
-      <GoogleAdSenseScript
-        clientId={adsenseClientId}
-        shouldLoad={canLoadAdsense}
-      />
       <Head>
         <title>{t("videoLibrarySeoTitle")}</title>
         <meta name="description" content={t("videoLibrarySeoDesc")} />
