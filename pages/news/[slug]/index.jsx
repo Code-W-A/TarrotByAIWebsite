@@ -15,6 +15,7 @@ import {
   loadPublicArticles,
 } from "../../../lib/publicArticles";
 import ArticleAdSense from "../../../components/Ads/ArticleAdSense";
+import { getArticleContent, splitArticleForAds } from "../../../lib/articles/adPlacements";
 import PartnerPromoSlot from "../../../components/PartnerPromotions/PartnerPromoSlot";
 
 const SIDEBAR_ARTICLES_LIMIT = 12;
@@ -177,6 +178,9 @@ function BlogDetail({ articles, filteredArticle, relatedArticles, error, slug })
     : detectedLng === "id" 
     ? filteredArticle?.info?.ru?.descriere 
     : filteredArticle?.info?.[detectedLng]?.descriere || filteredArticle?.info?.ro?.descriere || '';
+
+  const articleContent = getArticleContent(filteredArticle, detectedLng);
+  const contentParts = splitArticleForAds(articleContent);
 
   // 🇷🇴 Text for social media sharing (ALWAYS Romanian)
   const shareTitle = filteredArticle?.info?.ro?.nume || "Articol Blog - Cristina Zurba";
@@ -379,6 +383,8 @@ function BlogDetail({ articles, filteredArticle, relatedArticles, error, slug })
             {/* Article Content */}
             <div className="lg:col-span-2">
               <div className="space-y-8">
+                <ArticleAdSense key={`${slug}:${detectedLng}:title`} article={filteredArticle}
+                  locale={detectedLng} placement="after-title" />
                 
                 {/* Featured Image - Modern Design */}
                 {filteredArticle?.image?.finalUri && (
@@ -424,6 +430,11 @@ function BlogDetail({ articles, filteredArticle, relatedArticles, error, slug })
                   </div>
                 )}
 
+                {articleDescription && (
+                  <ArticleAdSense key={`${slug}:${detectedLng}:description`} article={filteredArticle}
+                    locale={detectedLng} placement="after-description" />
+                )}
+
                 <PartnerPromoSlot placement="web_article_detail" className="my-6" />
 
                 {/* Main Article Content */}
@@ -443,24 +454,20 @@ function BlogDetail({ articles, filteredArticle, relatedArticles, error, slug })
 
                     {/* Article Content with Better Typography */}
                     <div className="prose prose-lg prose-slate max-w-none prose-headings:text-gray-900 prose-headings:font-bold prose-p:text-gray-900 prose-p:leading-relaxed prose-a:text-indigo-600 prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 prose-blockquote:border-l-4 prose-blockquote:border-indigo-500 prose-blockquote:bg-indigo-50 prose-blockquote:rounded-r-lg prose-blockquote:py-4 prose-blockquote:px-6">
-                      {(detectedLng === "hi" 
-                          ? filteredArticle?.info?.hu?.content 
-                          : detectedLng === "id" 
-                          ? filteredArticle?.info?.ru?.content 
-                          : filteredArticle?.info?.[detectedLng]?.content || filteredArticle?.info?.ro?.content) ? (
-                        <div 
-                          className="article-content"
-                          style={{
-                            color: '#000000'
-                          }}
-                          dangerouslySetInnerHTML={{ 
-                            __html: detectedLng === "hi" 
-                              ? filteredArticle?.info?.hu?.content 
-                              : detectedLng === "id" 
-                              ? filteredArticle?.info?.ru?.content 
-                              : filteredArticle?.info?.[detectedLng]?.content || filteredArticle?.info?.ro?.content
-                          }}
-                        />
+                      {articleContent ? (
+                        <div className="article-content" style={{ color: '#000000' }}>
+                          {contentParts.map((html, index) => (
+                            <React.Fragment key={`${slug}:${detectedLng}:${index}`}>
+                              {index > 0 && (
+                                <div className="not-prose">
+                                  <ArticleAdSense article={filteredArticle} locale={detectedLng}
+                                    placement={`between-zodiacs-${index}`} />
+                                </div>
+                              )}
+                              <div dangerouslySetInnerHTML={{ __html: html }} />
+                            </React.Fragment>
+                          ))}
+                        </div>
                       ) : (
                         <div className="text-center py-16">
                           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -474,12 +481,6 @@ function BlogDetail({ articles, filteredArticle, relatedArticles, error, slug })
                     </div>
                   </div>
                 </article>
-
-                <ArticleAdSense
-                  key={slug}
-                  article={filteredArticle}
-                  locale={detectedLng}
-                />
 
                 {/* YouTube Videos - Enhanced Design */}
                 {filteredArticle?.youtubeLinks && filteredArticle.youtubeLinks.length > 0 && (

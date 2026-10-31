@@ -2,17 +2,15 @@ import { useEffect, useRef, useState } from "react";
 import { getPublicAdsenseSlot, isAdsenseEnabled } from "../../lib/ads/config";
 import GoogleAdSenseBanner from "./GoogleAdSenseBanner";
 import { useAdsConsent } from "./useAdsConsent";
+import { getArticleContent } from "../../lib/articles/adPlacements";
 
-export default function ArticleAdSense({ article, locale }) {
+export default function ArticleAdSense({ article, locale, placement = "article" }) {
   const containerRef = useRef(null);
   const [nearViewport, setNearViewport] = useState(false);
   const { hasConsent } = useAdsConsent();
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT_ID?.trim();
   const slot = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_ARTICLE_SLOT_ID?.trim() || getPublicAdsenseSlot();
-  // Match the article's existing locale selection, including its legacy aliases.
-  const content = locale === "hi" ? article?.info?.hu?.content
-    : locale === "id" ? article?.info?.ru?.content
-    : article?.info?.[locale]?.content || article?.info?.ro?.content;
+  const content = getArticleContent(article, locale);
   const hasText = typeof content === "string" && Boolean(
     content.replace(/<[^>]*>/g, "").replace(/&nbsp;|&#160;|\u00a0/g, " ").trim()
   );
@@ -35,7 +33,7 @@ export default function ArticleAdSense({ article, locale }) {
   const shouldRequest = nearViewport && hasConsent && process.env.NODE_ENV === "production";
 
   return (
-    <aside ref={containerRef} aria-label="Publicitate" style={{ padding: "32px 0" }}>
+    <aside ref={containerRef} aria-label="Publicitate" data-adsense-placement={placement} style={{ padding: "32px 0" }}>
       <div style={{ height: 280 }}>
         <div style={{ height: 30, fontSize: 12, color: "#64748b", textAlign: "center" }}>
           Publicitate

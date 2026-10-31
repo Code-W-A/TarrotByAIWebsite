@@ -98,3 +98,27 @@ it("uses the shared slot when no dedicated article slot is configured", async ()
   expect(container.querySelector("ins").dataset.adSlot).toBe("shared-slot");
   expect(push).toHaveBeenCalledTimes(1);
 });
+
+it("requests each article placement independently and only when it approaches the viewport", async () => {
+  const observers = [];
+  global.IntersectionObserver = jest.fn(function (callback) {
+    observers.push(callback);
+    this.observe = jest.fn(); this.disconnect = jest.fn();
+  });
+  await act(async () => root.render(<>
+    <AdsProviderScripts />
+    <ArticleAdSense article={article} locale="ro" placement="after-title" />
+    <ArticleAdSense article={article} locale="ro" placement="after-description" />
+    <ArticleAdSense article={article} locale="ro" placement="between-zodiacs-1" />
+  </>));
+  expect(container.querySelectorAll("ins")).toHaveLength(3);
+  expect(push).not.toHaveBeenCalled();
+  await act(async () => observers[0]([{ isIntersecting: true }]));
+  expect(push).toHaveBeenCalledTimes(1);
+  await act(async () => observers[1]([{ isIntersecting: true }]));
+  expect(push).toHaveBeenCalledTimes(2);
+  await act(async () => observers[2]([{ isIntersecting: true }]));
+  expect(push).toHaveBeenCalledTimes(3);
+  expect([...container.querySelectorAll("aside")].map((node) => node.dataset.adsensePlacement))
+    .toEqual(["after-title", "after-description", "between-zodiacs-1"]);
+});
