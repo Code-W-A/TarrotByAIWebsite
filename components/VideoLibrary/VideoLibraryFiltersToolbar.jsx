@@ -3,7 +3,7 @@ import Link from "next/link";
 
 const ACCESS_OPTIONS = [
   { value: "all", labelKey: "videoLibraryAccessChipAll" },
-  { value: "free", labelKey: "videoLibraryAccessChipAppOnly" },
+  { value: "free", labelKey: "videoLibraryBadgeFree" },
   { value: "premium", labelKey: "videoLibraryAccessChipPremium" },
 ];
 

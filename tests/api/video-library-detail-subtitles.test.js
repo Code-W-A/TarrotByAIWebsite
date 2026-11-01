@@ -49,7 +49,26 @@ it('uses the resolved localized source rather than the root video', async () => 
   expect(createSubtitlePlayback).toHaveBeenCalledWith(expect.anything(), { libraryId: '651812', videoId: EN });
 });
 
-it.each(['web', 'premium', 'scheduled'])('does not grant subtitle access to %s restricted playback', async mode => {
+it.each(['ro', 'en'])('allows free web detail without authentication in %s, without mobile subtitle enrichment', async locale => {
+  const result = await request({ client: 'web', locale, nativeSubtitles: '1' });
+  expect(result.statusCode).toBe(200);
+  const source = locale === 'en' ? EN : SOURCE;
+  expect(result.body.video).toMatchObject({
+    canPlay: true, isPremium: false, lockedReason: null,
+    embedSrc: `https://player.mediadelivery.net/embed/651812/${source}`,
+    hlsSrc: `https://cdn.example.com/${source}/playlist.m3u8`,
+  });
+  expect(createSubtitlePlayback).not.toHaveBeenCalled();
+});
+
+it('keeps premium web detail locked for anonymous visitors', async () => {
+  loadPremiumVideoLibraryRowById.mockResolvedValue({ ...row, isPremium: true });
+  const result = await request({ client: 'web' });
+  expect(result.statusCode).toBe(200);
+  expect(result.body.video).toMatchObject({ canPlay: false, isPremium: true, lockedReason: 'premium_required' });
+});
+
+it.each(['web', 'premium', 'scheduled'])('does not enrich %s playback with native subtitles', async mode => {
   if (mode === 'premium') loadPremiumVideoLibraryRowById.mockResolvedValue({ ...row, isPremium: true });
   if (mode === 'scheduled') loadPremiumVideoLibraryRowById.mockResolvedValue({ ...row, publishAt: { seconds: Math.floor(Date.now() / 1000) + 86400 } });
   await request({ nativeSubtitles: '1', ...(mode === 'web' ? { client: 'web' } : {}) });
