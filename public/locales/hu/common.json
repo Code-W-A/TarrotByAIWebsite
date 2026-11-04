@@ -614,5 +614,8 @@
   "premiumRecurringConsent": "Megértettem és elfogadom az ismétlődő havi fizetéseket az előfizetés lemondásáig.",
   "premiumRecurringRequired": "A fizetés előtt fogadja el az ismétlődő fizetéseket.",
   "premiumRecurringExpired": "Az ajánlat megváltozott vagy lejárt. Ellenőrizze az árat, és erősítse meg újra.",
-  "premiumRecurringUnavailable": "Nem tudtuk elindítani a fizetést. Kérjük, próbálja újra."
+  "premiumRecurringUnavailable": "Nem tudtuk elindítani a fizetést. Kérjük, próbálja újra.",
+  "videoSubtitlesTitle": "Feliratok",
+  "videoSubtitlesOff": "Kikapcsolva",
+  "videoSubtitlesUnavailable": "A feliratok átmenetileg nem érhetők el."
 }

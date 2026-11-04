@@ -188,8 +188,8 @@ async function handler(req, res) {
       commentsCount,
     };
 
-    // Opt-in detail enrichment only; lists, web and legacy clients retain their DTOs.
-    if (!webClient && req.query.nativeSubtitles === "1" && video.platform === "bunny" && video.canPlay && !video.lockedReason) {
+    // Opt-in detail enrichment for both players; legacy detail and lists stay unchanged.
+    if (req.query.nativeSubtitles === "1" && video.platform === "bunny" && video.canPlay && !video.lockedReason) {
       try {
         const subtitleHlsSrc = await createSubtitlePlayback(video, extractBunnyEmbedParts(video.videoUrl));
         if (subtitleHlsSrc) video.subtitleHlsSrc = subtitleHlsSrc;

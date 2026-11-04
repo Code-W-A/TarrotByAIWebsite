@@ -651,5 +651,8 @@
     "confirm": "Confirm",
     "back": "Back",
     "refresh": "Check status"
-  }
+  },
+  "videoSubtitlesTitle": "Subtitles",
+  "videoSubtitlesOff": "Off",
+  "videoSubtitlesUnavailable": "Subtitles are temporarily unavailable."
 }

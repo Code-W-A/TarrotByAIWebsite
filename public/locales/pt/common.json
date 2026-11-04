@@ -614,5 +614,8 @@
   "premiumRecurringConsent": "Compreendo e aceito os pagamentos mensais recorrentes até cancelar a assinatura.",
   "premiumRecurringRequired": "Aceite os pagamentos recorrentes antes de continuar para o pagamento.",
   "premiumRecurringExpired": "A oferta mudou ou expirou. Verifique o preço e confirme novamente.",
-  "premiumRecurringUnavailable": "Não foi possível iniciar o checkout. Tente novamente."
+  "premiumRecurringUnavailable": "Não foi possível iniciar o checkout. Tente novamente.",
+  "videoSubtitlesTitle": "Legendas",
+  "videoSubtitlesOff": "Desativadas",
+  "videoSubtitlesUnavailable": "As legendas estão temporariamente indisponíveis."
 }

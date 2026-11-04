@@ -614,5 +614,8 @@
   "premiumRecurringConsent": "Разбирам и приемам повтарящите се месечни плащания до прекратяване на абонамента.",
   "premiumRecurringRequired": "Приемете повтарящите се плащания, преди да продължите към плащането.",
   "premiumRecurringExpired": "Офертата е променена или е изтекла. Проверете цената и потвърдете отново.",
-  "premiumRecurringUnavailable": "Не успяхме да започнем плащането. Моля, опитайте отново."
+  "premiumRecurringUnavailable": "Не успяхме да започнем плащането. Моля, опитайте отново.",
+  "videoSubtitlesTitle": "Субтитри",
+  "videoSubtitlesOff": "Изключени",
+  "videoSubtitlesUnavailable": "Субтитрите временно не са налични."
 }

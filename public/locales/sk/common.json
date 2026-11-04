@@ -614,5 +614,8 @@
   "premiumRecurringConsent": "Rozumiem opakovaným mesačným platbám a súhlasím s nimi až do zrušenia predplatného.",
   "premiumRecurringRequired": "Pred pokračovaním k platbe potvrďte súhlas s opakovanými platbami.",
   "premiumRecurringExpired": "Ponuka sa zmenila alebo vypršala. Skontrolujte cenu a znova potvrďte.",
-  "premiumRecurringUnavailable": "Nepodarilo sa nám spustiť platbu. Skúste to znova."
+  "premiumRecurringUnavailable": "Nepodarilo sa nám spustiť platbu. Skúste to znova.",
+  "videoSubtitlesTitle": "Titulky",
+  "videoSubtitlesOff": "Vypnuté",
+  "videoSubtitlesUnavailable": "Titulky sú dočasne nedostupné."
 }

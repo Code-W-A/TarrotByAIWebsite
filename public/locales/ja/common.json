@@ -614,5 +614,8 @@
   "premiumRecurringConsent": "サブスクリプションをキャンセルするまで毎月継続して請求されることを理解し、同意します。",
   "premiumRecurringRequired": "支払いに進む前に、継続的な請求に同意してください。",
   "premiumRecurringExpired": "オファーが変更されたか、有効期限が切れました。価格を確認し、再度同意してください。",
-  "premiumRecurringUnavailable": "チェックアウトを開始できませんでした。もう一度お試しください。"
+  "premiumRecurringUnavailable": "チェックアウトを開始できませんでした。もう一度お試しください。",
+  "videoSubtitlesTitle": "字幕",
+  "videoSubtitlesOff": "オフ",
+  "videoSubtitlesUnavailable": "字幕は一時的に利用できません。"
 }

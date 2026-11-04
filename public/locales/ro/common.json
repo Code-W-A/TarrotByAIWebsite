@@ -651,5 +651,8 @@
     "confirm": "Confirmă",
     "back": "Înapoi",
     "refresh": "Verifică starea"
-  }
+  },
+  "videoSubtitlesTitle": "Subtitrări",
+  "videoSubtitlesOff": "Oprite",
+  "videoSubtitlesUnavailable": "Subtitrările sunt momentan indisponibile."
 }

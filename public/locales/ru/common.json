@@ -614,5 +614,8 @@
   "premiumRecurringConsent": "Я понимаю и принимаю регулярные ежемесячные платежи до отмены подписки.",
   "premiumRecurringRequired": "Подтвердите согласие на регулярные платежи перед переходом к оплате.",
   "premiumRecurringExpired": "Предложение изменилось или истекло. Проверьте цену и подтвердите снова.",
-  "premiumRecurringUnavailable": "Не удалось начать оформление заказа. Пожалуйста, попробуйте еще раз.\n"
+  "premiumRecurringUnavailable": "Не удалось начать оформление заказа. Пожалуйста, попробуйте еще раз.\n",
+  "videoSubtitlesTitle": "Субтитры",
+  "videoSubtitlesOff": "Выключены",
+  "videoSubtitlesUnavailable": "Субтитры временно недоступны."
 }

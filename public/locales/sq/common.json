@@ -614,5 +614,8 @@
   "premiumRecurringConsent": "E kuptoj dhe pranoj pagesat mujore të përsëritura deri në anulimin e abonimit.",
   "premiumRecurringRequired": "Pranoni pagesat e përsëritura përpara se të vazhdoni me pagesën.",
   "premiumRecurringExpired": "Oferta ka ndryshuar ose ka skaduar. Kontrolloni çmimin dhe konfirmoni sërish.",
-  "premiumRecurringUnavailable": "Nuk mundëm ta fillonim pagesën. Ju lutemi provoni përsëri."
+  "premiumRecurringUnavailable": "Nuk mundëm ta fillonim pagesën. Ju lutemi provoni përsëri.",
+  "videoSubtitlesTitle": "Titrat",
+  "videoSubtitlesOff": "Të çaktivizuara",
+  "videoSubtitlesUnavailable": "Titrat nuk janë të disponueshme përkohësisht."
 }

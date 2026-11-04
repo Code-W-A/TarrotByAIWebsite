@@ -614,5 +614,8 @@
   "premiumRecurringConsent": "구독을 취소할 때까지 매월 반복 결제되는 것을 이해하고 동의합니다.",
   "premiumRecurringRequired": "결제를 진행하기 전에 반복 결제에 동의해 주세요.",
   "premiumRecurringExpired": "혜택이 변경되었거나 만료되었습니다. 가격을 확인하고 다시 동의해 주세요.",
-  "premiumRecurringUnavailable": "결제를 시작할 수 없습니다. 다시 시도해 주세요."
+  "premiumRecurringUnavailable": "결제를 시작할 수 없습니다. 다시 시도해 주세요.",
+  "videoSubtitlesTitle": "자막",
+  "videoSubtitlesOff": "끄기",
+  "videoSubtitlesUnavailable": "자막을 일시적으로 사용할 수 없습니다."
 }

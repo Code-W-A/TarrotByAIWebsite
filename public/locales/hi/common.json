@@ -614,5 +614,8 @@
   "premiumRecurringConsent": "मैं सदस्यता रद्द करने तक आवर्ती मासिक भुगतानों को समझता/समझती हूँ और स्वीकार करता/करती हूँ।",
   "premiumRecurringRequired": "भुगतान पर आगे बढ़ने से पहले आवर्ती भुगतानों को स्वीकार करें।",
   "premiumRecurringExpired": "प्रस्ताव बदल गया है या समाप्त हो गया है। कीमत जाँचें और फिर पुष्टि करें।",
-  "premiumRecurringUnavailable": "चेकआउट शुरू नहीं हो सका। कृपया पुनः प्रयास करें।"
+  "premiumRecurringUnavailable": "चेकआउट शुरू नहीं हो सका। कृपया पुनः प्रयास करें।",
+  "videoSubtitlesTitle": "उपशीर्षक",
+  "videoSubtitlesOff": "बंद",
+  "videoSubtitlesUnavailable": "उपशीर्षक अस्थायी रूप से उपलब्ध नहीं हैं।"
 }

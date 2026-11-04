@@ -614,5 +614,8 @@
   "premiumRecurringConsent": "Razumijem i prihvatam ponavljajuća mjesečna plaćanja do otkazivanja pretplate.",
   "premiumRecurringRequired": "Prihvatite ponavljajuća plaćanja prije nastavka na plaćanje.",
   "premiumRecurringExpired": "Ponuda se promijenila ili je istekla. Provjerite cijenu i ponovo potvrdite.",
-  "premiumRecurringUnavailable": "Nismo mogli započeti plaćanje. Pokušajte ponovo."
+  "premiumRecurringUnavailable": "Nismo mogli započeti plaćanje. Pokušajte ponovo.",
+  "videoSubtitlesTitle": "Titlovi",
+  "videoSubtitlesOff": "Isključeni",
+  "videoSubtitlesUnavailable": "Titlovi su trenutno nedostupni."
 }

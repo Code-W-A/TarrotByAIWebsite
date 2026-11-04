@@ -86,6 +86,7 @@ export default function VideoDetailPage() {
   const [likeError, setLikeError] = useState("");
   const [chapterSeekRequest, setChapterSeekRequest] = useState(null);
   const [chapterMessage, setChapterMessage] = useState("");
+  const [subtitlePlaybackFailed, setSubtitlePlaybackFailed] = useState(false);
   const {
     consentGranted,
     modalVisible,
@@ -111,6 +112,7 @@ export default function VideoDetailPage() {
     setLoadError("");
     setVideo(null);
     setRelated([]);
+    setSubtitlePlaybackFailed(false);
       setAvailableLocales([]);
       setChapterSeekRequest(null);
       setChapterMessage("");
@@ -118,7 +120,7 @@ export default function VideoDetailPage() {
       const locale = router.locale || "ro";
       const headers = await getFirebaseBearerHeader({ required: false });
       const res = await fetch(
-        `/api/premium/video-library/${encodeURIComponent(videoId)}?locale=${encodeURIComponent(locale)}&client=web`,
+        `/api/premium/video-library/${encodeURIComponent(videoId)}?locale=${encodeURIComponent(locale)}&client=web&nativeSubtitles=1`,
         {
           headers: {
             Accept: "application/json",
@@ -362,7 +364,11 @@ export default function VideoDetailPage() {
                         {bunnyHlsPlayable ? (
                           <BunnyHlsPlayer
                             key={video.hlsSrc || video.id}
-                            src={video.hlsSrc}
+                            src={video.subtitleHlsSrc || video.hlsSrc}
+                            fallbackSrc={video.hlsSrc}
+                            subtitlesLabel={t("videoSubtitlesTitle")}
+                            subtitlesOffLabel={t("videoSubtitlesOff")}
+                            onSubtitlesUnavailable={setSubtitlePlaybackFailed}
                             title={video.title}
                             poster={video.thumbnailUrl}
                             seekRequest={chapterSeekRequest}
@@ -450,6 +456,12 @@ export default function VideoDetailPage() {
                       </div>
                     )}
                   </div>
+
+                  {bunnyHlsPlayable && consentGranted && (video.subtitlesUnavailable || subtitlePlaybackFailed) ? (
+                    <p role="status" className="mt-2 text-sm text-slate-600">
+                      {t("videoSubtitlesUnavailable")}
+                    </p>
+                  ) : null}
 
                   <div className="mt-4 flex flex-wrap items-center gap-3">
                     <button

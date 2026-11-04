@@ -614,5 +614,8 @@
   "premiumRecurringConsent": "Aboneliği iptal edene kadar tekrarlanan aylık ödemeleri anlıyor ve kabul ediyorum.",
   "premiumRecurringRequired": "Ödemeye geçmeden önce tekrarlanan ödemeleri kabul edin.",
   "premiumRecurringExpired": "Teklif değişti veya süresi doldu. Fiyatı kontrol edip tekrar onaylayın.",
-  "premiumRecurringUnavailable": "Ödeme işlemine başlayamadık. Lütfen tekrar deneyin.\n"
+  "premiumRecurringUnavailable": "Ödeme işlemine başlayamadık. Lütfen tekrar deneyin.\n",
+  "videoSubtitlesTitle": "Altyazılar",
+  "videoSubtitlesOff": "Kapalı",
+  "videoSubtitlesUnavailable": "Altyazılar geçici olarak kullanılamıyor."
 }

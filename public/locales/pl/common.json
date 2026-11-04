@@ -614,5 +614,8 @@
   "premiumRecurringConsent": "Rozumiem i akceptuję cykliczne płatności miesięczne do anulowania subskrypcji.",
   "premiumRecurringRequired": "Zaakceptuj cykliczne płatności przed przejściem do płatności.",
   "premiumRecurringExpired": "Oferta zmieniła się lub wygasła. Sprawdź cenę i potwierdź ponownie.",
-  "premiumRecurringUnavailable": "Nie udało się rozpocząć realizacji zamówienia. Spróbuj ponownie."
+  "premiumRecurringUnavailable": "Nie udało się rozpocząć realizacji zamówienia. Spróbuj ponownie.",
+  "videoSubtitlesTitle": "Napisy",
+  "videoSubtitlesOff": "Wyłączone",
+  "videoSubtitlesUnavailable": "Napisy są tymczasowo niedostępne."
 }

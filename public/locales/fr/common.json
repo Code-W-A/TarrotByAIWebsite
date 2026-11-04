@@ -614,5 +614,8 @@
   "premiumRecurringConsent": "Je comprends et accepte les paiements mensuels récurrents jusqu’à la résiliation de mon abonnement.",
   "premiumRecurringRequired": "Acceptez les paiements récurrents avant de passer au paiement.",
   "premiumRecurringExpired": "L’offre a changé ou a expiré. Vérifiez le prix et confirmez à nouveau.",
-  "premiumRecurringUnavailable": "Impossible de procéder au paiement. Veuillez réessayer."
+  "premiumRecurringUnavailable": "Impossible de procéder au paiement. Veuillez réessayer.",
+  "videoSubtitlesTitle": "Sous-titres",
+  "videoSubtitlesOff": "Désactivés",
+  "videoSubtitlesUnavailable": "Les sous-titres sont temporairement indisponibles."
 }

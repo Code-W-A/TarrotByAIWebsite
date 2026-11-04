@@ -1,9 +1,13 @@
-# Bunny subtitles in Expo
+# Bunny subtitles in Expo and on the website
 
-The mobile detail request opts in with `nativeSubtitles=1`. Legacy detail, lists
-and `client=web` do not acquire new fields or call Bunny for subtitles. A playable
+The mobile and web detail requests opt in with `nativeSubtitles=1`. Legacy detail
+and lists do not acquire new fields or call Bunny for subtitles. A playable
 Bunny detail can return a relative `video.subtitleHlsSrc`; Expo resolves it against
 its API base URL and retains the original `hlsSrc` for one fallback attempt.
+The website uses the same signed source with `client=web`; access and locale
+decisions still run before caption discovery. Its language selector supports
+Safari native text tracks and hls.js tracks on other supported browsers. Captions
+start Off. The selector remains inside the fullscreen player container.
 
 ## Server configuration
 
@@ -41,7 +45,9 @@ URLs and redirects are not accepted. Requests have timeouts and size limits.
 Unavailable metadata does not fail video detail. The mobile client receives
 `subtitlesUnavailable`, keeps ordinary playback and displays a short message.
 An enhanced-source playback error falls back once to the original HLS URL.
-The explicit Reload action permits another enhanced-source attempt.
+The website preserves playback position during fallback and disables a failing
+caption track without restarting ordinary playback. Both players display an
+unavailable-subtitles message. Reloading the video permits another enhanced-source attempt.
 
 ## Local verification / release
 

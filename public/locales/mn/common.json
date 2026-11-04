@@ -614,5 +614,8 @@
   "premiumRecurringConsent": "Захиалгаа цуцлах хүртэл сар бүр давтагдах төлбөрийг ойлгож, зөвшөөрч байна.",
   "premiumRecurringRequired": "Төлбөр төлөхөөс өмнө давтагдах төлбөрийг зөвшөөрнө үү.",
   "premiumRecurringExpired": "Санал өөрчлөгдсөн эсвэл хугацаа нь дууссан. Үнийг шалгаад дахин баталгаажуулна уу.",
-  "premiumRecurringUnavailable": "\nБид төлбөрөө эхлүүлж чадсангүй. Дахин оролдоно уу."
+  "premiumRecurringUnavailable": "\nБид төлбөрөө эхлүүлж чадсангүй. Дахин оролдоно уу.",
+  "videoSubtitlesTitle": "Хадмал орчуулга",
+  "videoSubtitlesOff": "Унтраасан",
+  "videoSubtitlesUnavailable": "Хадмал орчуулга түр боломжгүй байна."
 }

@@ -49,7 +49,7 @@ it('uses the resolved localized source rather than the root video', async () => 
   expect(createSubtitlePlayback).toHaveBeenCalledWith(expect.anything(), { libraryId: '651812', videoId: EN });
 });
 
-it.each(['ro', 'en'])('allows free web detail without authentication in %s, without mobile subtitle enrichment', async locale => {
+it.each(['ro', 'en'])('enriches opted-in free web detail in %s using its localized source', async locale => {
   const result = await request({ client: 'web', locale, nativeSubtitles: '1' });
   expect(result.statusCode).toBe(200);
   const source = locale === 'en' ? EN : SOURCE;
@@ -58,7 +58,22 @@ it.each(['ro', 'en'])('allows free web detail without authentication in %s, with
     embedSrc: `https://player.mediadelivery.net/embed/651812/${source}`,
     hlsSrc: `https://cdn.example.com/${source}/playlist.m3u8`,
   });
+  expect(result.body.video.subtitleHlsSrc).toBe('/api/premium/video-subtitles/master.m3u8?grant=test');
+  expect(createSubtitlePlayback).toHaveBeenCalledWith(expect.anything(), { libraryId: '651812', videoId: source });
+});
+
+it('preserves legacy web detail without subtitle opt-in', async () => {
+  const result = await request({ client: 'web' });
+  expect(result.statusCode).toBe(200);
+  expect(result.body.video.subtitleHlsSrc).toBeUndefined();
   expect(createSubtitlePlayback).not.toHaveBeenCalled();
+});
+
+it('enriches authenticated premium web playback after access has been checked', async () => {
+  getOptionalAuth.mockResolvedValue({ uid: 'premium-user' });
+  loadPremiumVideoLibraryRowById.mockResolvedValue({ ...row, isPremium: true });
+  const result = await request({ client: 'web', nativeSubtitles: '1' });
+  expect(result.body.video).toMatchObject({ canPlay: true, subtitleHlsSrc: expect.any(String) });
 });
 
 it('keeps premium web detail locked for anonymous visitors', async () => {
@@ -68,17 +83,17 @@ it('keeps premium web detail locked for anonymous visitors', async () => {
   expect(result.body.video).toMatchObject({ canPlay: false, isPremium: true, lockedReason: 'premium_required' });
 });
 
-it.each(['web', 'premium', 'scheduled'])('does not enrich %s playback with native subtitles', async mode => {
+it.each(['premium', 'scheduled'])('does not enrich locked %s web playback with subtitles', async mode => {
   if (mode === 'premium') loadPremiumVideoLibraryRowById.mockResolvedValue({ ...row, isPremium: true });
   if (mode === 'scheduled') loadPremiumVideoLibraryRowById.mockResolvedValue({ ...row, publishAt: { seconds: Math.floor(Date.now() / 1000) + 86400 } });
-  await request({ nativeSubtitles: '1', ...(mode === 'web' ? { client: 'web' } : {}) });
+  await request({ nativeSubtitles: '1', client: 'web' });
   expect(createSubtitlePlayback).not.toHaveBeenCalled();
 });
 
-it('keeps playback usable when Bunny is unavailable', async () => {
+it.each([undefined, 'web'])('keeps playback usable when Bunny is unavailable (client=%s)', async client => {
   jest.spyOn(console, 'warn').mockImplementation(() => {});
   createSubtitlePlayback.mockRejectedValueOnce(new Error('offline'));
-  const result = await request({ nativeSubtitles: '1' });
+  const result = await request({ nativeSubtitles: '1', client });
   expect(result.statusCode).toBe(200);
   expect(result.body.video).toMatchObject({ canPlay: true, subtitlesUnavailable: true });
   expect(result.body.video.hlsSrc).toBeTruthy();
