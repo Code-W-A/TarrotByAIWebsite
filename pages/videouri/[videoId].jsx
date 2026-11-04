@@ -535,14 +535,14 @@ export default function VideoDetailPage() {
                     </div>
                   ) : null}
 
+                  <AdPlacementShell placementId="banner1" className="!my-6" />
+
                   <VideoChapters
                     chapters={video.chapters}
                     disabled={!videoIsPlayable}
                     message={chapterMessage}
                     onSelect={handleChapterSelect}
                   />
-
-                  <AdPlacementShell placementId="banner1" className="!my-6" />
 
                   <h1 className="mt-5 text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
                     {video.title}
