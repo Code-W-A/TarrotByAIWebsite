@@ -49,17 +49,24 @@ it('uses the resolved localized source rather than the root video', async () => 
   expect(createSubtitlePlayback).toHaveBeenCalledWith(expect.anything(), { libraryId: '651812', videoId: EN });
 });
 
-it.each(['ro', 'en'])('enriches opted-in free web detail in %s using its localized source', async locale => {
+it.each(['ro', 'en'])('keeps free web detail in %s app-only without subtitle playback', async locale => {
   const result = await request({ client: 'web', locale, nativeSubtitles: '1' });
   expect(result.statusCode).toBe(200);
   const source = locale === 'en' ? EN : SOURCE;
   expect(result.body.video).toMatchObject({
-    canPlay: true, isPremium: false, lockedReason: null,
+    canPlay: false, isPremium: false, lockedReason: 'app_only',
     embedSrc: `https://player.mediadelivery.net/embed/651812/${source}`,
     hlsSrc: `https://cdn.example.com/${source}/playlist.m3u8`,
   });
-  expect(result.body.video.subtitleHlsSrc).toBe('/api/premium/video-subtitles/master.m3u8?grant=test');
-  expect(createSubtitlePlayback).toHaveBeenCalledWith(expect.anything(), { libraryId: '651812', videoId: source });
+  expect(result.body.video.subtitleHlsSrc).toBeUndefined();
+  expect(createSubtitlePlayback).not.toHaveBeenCalled();
+});
+
+it('keeps free web videos app-only for authenticated premium users too', async () => {
+  getOptionalAuth.mockResolvedValue({ uid: 'premium-user' });
+  const result = await request({ client: 'web', nativeSubtitles: '1' });
+  expect(result.body.video).toMatchObject({ canPlay: false, isPremium: false, lockedReason: 'app_only' });
+  expect(createSubtitlePlayback).not.toHaveBeenCalled();
 });
 
 it('preserves legacy web detail without subtitle opt-in', async () => {
@@ -91,6 +98,10 @@ it.each(['premium', 'scheduled'])('does not enrich locked %s web playback with s
 });
 
 it.each([undefined, 'web'])('keeps playback usable when Bunny is unavailable (client=%s)', async client => {
+  if (client === 'web') {
+    getOptionalAuth.mockResolvedValue({ uid: 'premium-user' });
+    loadPremiumVideoLibraryRowById.mockResolvedValue({ ...row, isPremium: true });
+  }
   jest.spyOn(console, 'warn').mockImplementation(() => {});
   createSubtitlePlayback.mockRejectedValueOnce(new Error('offline'));
   const result = await request({ nativeSubtitles: '1', client });
