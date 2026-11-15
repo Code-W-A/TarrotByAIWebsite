@@ -57,7 +57,7 @@ const ArticleEditor = (props) => {
           "video",
         ]}
         placeholder="Enter your text here..."
-        readOnly={false}
+        readOnly={Boolean(props.readOnly)}
       />
     </div>
   );

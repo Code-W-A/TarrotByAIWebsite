@@ -1,3 +1,4 @@
+import { assertArticleSize } from "../../lib/articleSize";
 import React, { useState, useEffect } from "react";
 import { Box, CircularProgress, Stack, Typography } from "@mui/material";
 import TableToolbar from "../ProcessTable/TableToolbar";
@@ -287,9 +288,11 @@ export default function BlogArticole({
     console.log(youtubeLink);
 
     try {
+      if (!db.some(item => item.id === dialogData.id)) throw new Error("Articolul nu mai este disponibil pentru editare. Reîncarcă lista.");
       const updateData = db.map(async (item) => {
         if (item.id === dialogData.id) {
           console.log("is found");
+          assertArticleSize({ ...item, info, categorie, youtubeLinks: handleYotubeLinksToArray(youtubeLink), timpProgramat, dataProgramata });
           let data;
           const fallbackDate = item?.firstUploadTimestamp || new Date();
           if (image.length === 0) {
@@ -382,6 +385,7 @@ export default function BlogArticole({
       void rebuildPublicArticlesCacheBestEffort("edit");
     } catch (err) {
       console.log("[BlogArticole] Error handleEdit...", err);
+      throw err;
     }
   };
 
@@ -420,6 +424,7 @@ export default function BlogArticole({
     }
 
     try {
+      assertArticleSize({ info, categorie, youtubeLinks: handleYotubeLinksToArray(youtubeLink), timpProgramat, dataProgramata });
       logBlogArticoleUpload("handleUpload:image-upload:start");
       const image = await uploadImage(
         selectedImages,

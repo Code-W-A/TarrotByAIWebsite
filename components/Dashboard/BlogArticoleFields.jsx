@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import { articleDocumentBytes, assertArticleSize, articleSaveError } from "../../lib/articleSize";
+import React, { useState, useRef, useEffect } from "react";
 import {
+  Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
   Typography,
   TextField,
   Grid,
@@ -22,6 +24,7 @@ import {
   MenuItem,
 } from "@mui/material";
 import dayjs from "dayjs";
+import { createArticleTranslationSession, runArticleTranslation } from "../../lib/articleTranslation";
 import GTranslateIcon from "@mui/icons-material/GTranslate";
 import { StyledTextField } from "../../styles/FormStyles";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -51,11 +54,24 @@ export default function BlogArticoleFields({
   dialogData,
   handleDelete,
 }) {
+  const translationSession = useRef(null);
+  const translationController = useRef(null);
+  const [translating, setTranslating] = useState(false);
+  const [translationStatus, setTranslationStatus] = useState("");
+  const [translationError, setTranslationError] = useState("");
+  useEffect(() => () => translationController.current?.abort(), []);
+  const closeForm = () => {
+    if (saveInFlight.current) return;
+    translationController.current?.abort();
+    handleShowSettings();
+  };
   // Funcția de actualizare a conținutului editorului
   const handleContentChange = (value) => {
     setContent(value);
   };
   const [loading, setLoading] = useState(false);
+  const saveInFlight = useRef(false);
+  const [saveError, setSaveError] = useState(null);
 
   const [selectedImages, setSelectedImages] = useState([]);
   const [image, setImage] = useState(dialogData.image ? dialogData.image : "");
@@ -696,27 +712,7 @@ export default function BlogArticoleFields({
     setFileInputKey(Date.now()); // Reset the input to allow selecting more images
   };
 
-  const handleUploadData = () => {
-    const authUser = authentication.currentUser;
-    const startedAt = performance.now();
-
-    logBlogArticoleUpload("form:save-clicked", {
-      mode: isEdit ? "edit" : "create",
-      uid: authUser?.uid || null,
-      email: authUser?.email || null,
-      imageCount: selectedImages.length,
-      hasExistingImage: Boolean(image?.finalUri),
-      categorie,
-      dataProgramata,
-      timpProgramat,
-      youtubeLinkLength: youtubeLink?.length || 0,
-      article: summarizeArticleInfo({
-        ro: { nume: numeRo, descriere: descriereRo, content: contentRo },
-      }),
-    });
-
-    setLoading(true);
-    const data = {
+  const articleInfo = {
       ro: { nume: numeRo, descriere: descriereRo, content: contentRo },
       en: { nume: numeEn, descriere: descriereEn, content: contentEn },
       es: { nume: numeEs, descriere: descriereEs, content: contentEs },
@@ -736,6 +732,33 @@ export default function BlogArticoleFields({
       ar: { nume: numeAr, descriere: descriereAr, content: contentAr },
       sq: { nume: numeSq, descriere: descriereSq, content: contentSq },
     };
+  const estimatedArticle = { ...dialogData, info: articleInfo, categorie, youtubeLinks: youtubeLink.split(";").filter(Boolean), timpProgramat, dataProgramata };
+  const estimatedBytes = articleDocumentBytes(estimatedArticle);
+  const handleUploadData = () => {
+    if (translationController.current || saveInFlight.current) return;
+    try { assertArticleSize(estimatedArticle); }
+    catch (error) { setSaveError(articleSaveError(error)); return; }
+    saveInFlight.current = true;
+    const authUser = authentication.currentUser;
+    const startedAt = performance.now();
+
+    logBlogArticoleUpload("form:save-clicked", {
+      mode: isEdit ? "edit" : "create",
+      uid: authUser?.uid || null,
+      email: authUser?.email || null,
+      imageCount: selectedImages.length,
+      hasExistingImage: Boolean(image?.finalUri),
+      categorie,
+      dataProgramata,
+      timpProgramat,
+      youtubeLinkLength: youtubeLink?.length || 0,
+      article: summarizeArticleInfo({
+        ro: { nume: numeRo, descriere: descriereRo, content: contentRo },
+      }),
+    });
+
+    setLoading(true);
+    const data = articleInfo;
 
     logBlogArticoleUpload("form:payload-ready", {
       mode: isEdit ? "edit" : "create",
@@ -744,50 +767,16 @@ export default function BlogArticoleFields({
     });
 
     const oldFileName = dialogData.image ? dialogData.image.fileName : "";
-    if (isEdit) {
-      logBlogArticoleUpload("form:dispatch-edit");
-      handleEdit(
-        data,
-        selectedImages,
-        image,
-        oldFileName,
-        categorie,
-        youtubeLink,
-        timpProgramat,
-        dataProgramata
-      ).then(() => {
-        logBlogArticoleUpload("form:edit-finished", {
-          elapsedMs: Math.round(performance.now() - startedAt),
-        });
-        setLoading(false);
-      });
-    } else {
-      logBlogArticoleUpload("form:dispatch-create");
-      handleUpload(
-        data,
-        selectedImages,
-        categorie,
-        youtubeLink,
-        timpProgramat,
-        dataProgramata
-      )
-        .then(() => {
-          logBlogArticoleUpload("form:create-finished", {
-            elapsedMs: Math.round(performance.now() - startedAt),
-          });
-          setLoading(false);
-        })
-        .catch((error) => {
-          logBlogArticoleUploadError("form:create-failed", error, {
-            elapsedMs: Math.round(performance.now() - startedAt),
-          });
-          setLoading(false);
-          window.alert(
-            error?.message ||
-              "Nu am putut salva articolul. Verifica imaginea, autentificarea Firebase si consola browserului."
-          );
-        });
-    }
+    Promise.resolve().then(() => isEdit
+      ? handleEdit(data, selectedImages, image, oldFileName, categorie, youtubeLink, timpProgramat, dataProgramata)
+      : handleUpload(data, selectedImages, categorie, youtubeLink, timpProgramat, dataProgramata)
+    ).catch(error => {
+      logBlogArticoleUploadError("form:save-failed", error);
+      setSaveError(articleSaveError(error));
+    }).finally(() => {
+      saveInFlight.current = false;
+      setLoading(false);
+    });
   };
 
   const theme = useTheme();
@@ -1007,39 +996,27 @@ export default function BlogArticoleFields({
       sq: setContentSq,
     };
 
-    // Funcție de delay
-    const sleep = (ms) => {
-      return new Promise((resolve) => setTimeout(resolve, ms));
-    };
-
-    for (let l of languages) {
-      console.log(l);
-
-      let translation;
-
-      if (l === "hu") {
-        translation = await handleTranslate(contentRoValue, "hi");
-      } else if (l === "ru") {
-        translation = await handleTranslate(contentRoValue, "id");
-      } else if (l === "rusa") {
-        translation = await handleTranslate(contentRoValue, "ru");
-      } else {
-        translation = await handleTranslate(contentRoValue, l);
+    if (translationController.current) return;
+    const controller = new AbortController();
+    translationController.current = controller;
+    setTranslating(true);
+    setTranslationError("");
+    try {
+      if (translationSession.current?.source !== contentRoValue) {
+        translationSession.current = createArticleTranslationSession(contentRoValue);
       }
-
-      // console.log("translation", translation);
-      if (translation) {
-        console.log("language round...", l);
-        console.log("translation", translation);
-
-        // Verificăm dacă există o funcție de setare corespunzătoare și actualizăm starea
-        if (setFunctions[l]) {
-          setFunctions[l](translation);
-        }
-      }
-
-      // Așteaptă o secundă înainte de a trece la următoarea limbă
-      await sleep(1000); // 1000 ms = 1 secunda
+      await runArticleTranslation(translationSession.current, {
+        languages: languages.map(key => ({ key, target: key === "hu" ? "hi" : key === "ru" ? "id" : key === "rusa" ? "ru" : key })),
+        signal: controller.signal,
+        onProgress: ({ key, current, total }) => setTranslationStatus(`Traducere ${key}: ${current}/${total} fragmente`),
+        onLocale: (key, html) => setFunctions[key](html),
+      });
+      setTranslationStatus("Traducerea conținutului este completă. Poți salva articolul.");
+    } catch (error) {
+      if (!controller.signal.aborted) setTranslationError(error.message || "Traducerea a eșuat. Reîncearcă.");
+    } finally {
+      if (!controller.signal.aborted) setTranslating(false);
+      translationController.current = null;
     }
   };
 
@@ -1061,6 +1038,7 @@ export default function BlogArticoleFields({
             {isEdit && (
               <Button
                 variant="outlined"
+                disabled={translating || loading}
                 onClick={handleDelete}
                 style={{
                   position: "relative",
@@ -1074,7 +1052,7 @@ export default function BlogArticoleFields({
             )}
             <Button
               variant="text"
-              onClick={handleShowSettings}
+              onClick={closeForm}
               style={{
                 position: "relative",
                 top: 10,
@@ -1360,7 +1338,12 @@ export default function BlogArticoleFields({
                 ) : (
                   <ArticleEditor
                     content={field.value}
-                    setContent={(value) => field.setValue(value)}
+                    readOnly={translating}
+                    setContent={(value) => {
+                      if (translationController.current) return;
+                      if (field.id === "content-ro") { translationSession.current = null; setTranslationError(""); setTranslationStatus(""); }
+                      field.setValue(value);
+                    }}
                   />
                 )}
                 {field.id === "nume-ro" && (
@@ -1368,6 +1351,7 @@ export default function BlogArticoleFields({
                     color="primary"
                     aria-label="add an alarm"
                     sx={{ position: "relative", left: 5, top: 15 }}
+                    disabled={translating || loading}
                     onClick={() => handleToTranslateNume(numeRo)}
                   >
                     <GTranslateIcon />
@@ -1378,6 +1362,7 @@ export default function BlogArticoleFields({
                     color="primary"
                     aria-label="add an alarm"
                     sx={{ position: "relative", left: 5, top: 15 }}
+                    disabled={translating || loading}
                     onClick={() => handleToTranslateDescriere(descriereRo)}
                   >
                     <GTranslateIcon />
@@ -1388,6 +1373,7 @@ export default function BlogArticoleFields({
                     color="primary"
                     aria-label="add an alarm"
                     sx={{ position: "relative", left: 5, top: 15 }}
+                    disabled={translating || loading}
                     onClick={() => handleToTranslateContent(contentRo)}
                   >
                     <GTranslateIcon />
@@ -1413,6 +1399,7 @@ export default function BlogArticoleFields({
             {isEdit ? (
               <Button
                 variant="contained"
+                disabled={translating || loading}
                 onClick={handleUploadData}
                 style={{ marginRight: 10 }}
               >
@@ -1422,6 +1409,7 @@ export default function BlogArticoleFields({
             ) : (
               <Button
                 variant="contained"
+                disabled={translating || loading}
                 onClick={handleUploadData}
                 style={{ marginRight: 10 }}
               >
@@ -1429,11 +1417,21 @@ export default function BlogArticoleFields({
                 Salvează
               </Button>
             )}
-            <Button variant="outlined" onClick={handleShowSettings}>
+            <Button variant="outlined" onClick={closeForm}>
               Cancel
             </Button>
           </Box>
-          <LoadingDialog loading={loading} setLoading={setLoading} />
+          {translationStatus && <Typography role="status">{translationStatus}</Typography>}
+          {translationError && <Box role="alert"><Typography color="error">{translationError}</Typography><Button disabled={translating || loading} onClick={() => handleToTranslateContent(contentRo)}>Reîncearcă traducerea conținutului</Button></Box>}
+          <Typography role="status" color={estimatedBytes > 900 * 1024 ? "error" : "text.secondary"}>
+            Dimensiune estimată articol: {(estimatedBytes / 1024).toFixed(1)} KiB / 900 KiB (toate limbile)
+          </Typography>
+          <Dialog open={Boolean(saveError)} onClose={() => setSaveError(null)} aria-labelledby="article-save-error-title">
+            <DialogTitle id="article-save-error-title">{saveError?.title}</DialogTitle>
+            <DialogContent><DialogContentText>{saveError?.message}</DialogContentText></DialogContent>
+            <DialogActions><Button onClick={() => setSaveError(null)}>Am înțeles</Button></DialogActions>
+          </Dialog>
+          <LoadingDialog loading={loading} setLoading={() => {}} />
         </>
       </Grid>
     </>

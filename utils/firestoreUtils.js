@@ -1,3 +1,4 @@
+import { assertArticleSize } from "../lib/articleSize";
 import {
   collection,
   doc,
@@ -84,6 +85,7 @@ export const handleUpdateFirestore = async (location, updatedData) => {
         EditDate: dateTime.date,
         Edittime: dateTime.time,
       };
+      if (location.startsWith("BlogArticole/")) assertArticleSize({ ...docSnapshot.data(), ...newData }, location);
       await updateDoc(ref, newData);
       return newData;
     } else {
@@ -91,11 +93,13 @@ export const handleUpdateFirestore = async (location, updatedData) => {
       console.log(
         `Documentul nu există la locația: ${location}. Se va crea documentul.`
       );
+      if (location.startsWith("BlogArticole/")) assertArticleSize(updatedData, location);
       await setDoc(ref, updatedData);
       return updatedData;
     }
   } catch (err) {
     console.error("Error on...handleUpdateFirestore...", err);
+    if (location.startsWith("BlogArticole/")) throw err;
   }
 };
 
@@ -223,6 +227,7 @@ export const handleUploadFirestore = async (data, location) => {
     }
 
     // Face upload cu noul obiect de date care include ID-ul documentului
+    if (isBlogArticole) assertArticleSize(newData, docRef.path);
     await setDoc(docRef, newData);
 
     if (isBlogArticole) {
@@ -246,6 +251,7 @@ export const handleUploadFirestore = async (data, location) => {
           (typeof performance !== "undefined" ? performance.now() : Date.now()) - startedAt
         ),
       });
+      throw err;
     } else {
       console.log("Eroare la handleUploadFirestore...", err);
     }
