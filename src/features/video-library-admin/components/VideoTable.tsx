@@ -168,6 +168,8 @@ function RowActionsMenu({
 type Props = {
   videos: VideoDoc[];
   loading?: boolean;
+  selectedIds: string[];
+  onSelectedIdsChange: (ids: string[]) => void;
   sortField: VideoSortField;
   sortDirection: VideoSortDirection;
   onSortChange: (field: VideoSortField) => void;
@@ -182,6 +184,8 @@ type Props = {
 export default function VideoTable({
   videos,
   loading = false,
+  selectedIds,
+  onSelectedIdsChange,
   sortField,
   sortDirection,
   onSortChange,
@@ -193,6 +197,27 @@ export default function VideoTable({
   onPreview,
 }: Props) {
   const [actionsMenuVideoId, setActionsMenuVideoId] = useState<string | null>(null);
+  const selectAllRef = useRef<HTMLInputElement>(null);
+  const selected = new Set(selectedIds);
+  const allSelected = videos.length > 0 && videos.every((video) => selected.has(video.id));
+  const someSelected = videos.some((video) => selected.has(video.id));
+
+  useEffect(() => {
+    if (selectAllRef.current) selectAllRef.current.indeterminate = someSelected && !allSelected;
+  }, [allSelected, someSelected]);
+
+  const toggleOne = (id: string) => {
+    onSelectedIdsChange(selected.has(id) ? selectedIds.filter((item) => item !== id) : [...selectedIds, id]);
+  };
+
+  const togglePage = () => {
+    if (allSelected) {
+      const visible = new Set(videos.map((video) => video.id));
+      onSelectedIdsChange(selectedIds.filter((id) => !visible.has(id)));
+      return;
+    }
+    onSelectedIdsChange([...new Set([...selectedIds, ...videos.map((video) => video.id)])]);
+  };
 
   const getAriaSort = (field: VideoSortField): "ascending" | "descending" | "none" => {
     if (sortField !== field) return "none";
@@ -236,6 +261,16 @@ export default function VideoTable({
         <table className="min-w-full text-left text-sm">
           <thead className="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-700">
             <tr>
+              <th className="w-12 px-4 py-4">
+                <input
+                  ref={selectAllRef}
+                  type="checkbox"
+                  checked={allSelected}
+                  aria-label="Selectează videoclipurile de pe pagină"
+                  onChange={togglePage}
+                  className="h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                />
+              </th>
               <th className="px-6 py-4" aria-sort={getAriaSort("order")}>
                 <button
                   type="button"
@@ -321,7 +356,16 @@ export default function VideoTable({
             {videos.map((video) => {
               const releaseStatus = getReleaseStatus(video);
               return (
-              <tr key={video.id} className="transition-colors hover:bg-gray-50">
+              <tr key={video.id} className={`transition-colors hover:bg-gray-50 ${selected.has(video.id) ? "bg-red-50/60" : ""}`}>
+                <td className="px-4 py-4">
+                  <input
+                    type="checkbox"
+                    checked={selected.has(video.id)}
+                    aria-label={`Selectează ${video.title}`}
+                    onChange={() => toggleOne(video.id)}
+                    className="h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                  />
+                </td>
                 <td className="px-6 py-4 text-gray-600">{video.order ?? "—"}</td>
                 <td className="px-6 py-4">
                   <div className="flex flex-wrap items-center gap-2">

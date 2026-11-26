@@ -5,10 +5,11 @@ jest.mock('firebase/firestore', () => ({
   collection: jest.fn(), doc: jest.fn(),
   addDoc: jest.fn(async () => ({ id: 'new-video' })),
   updateDoc: jest.fn(async () => {}), deleteDoc: jest.fn(async () => {}),
+  writeBatch: jest.fn(() => ({ delete: jest.fn(), commit: jest.fn(async () => {}) })),
   getDoc: jest.fn(async () => ({ exists: () => true, data: () => ({ isPublished: false }) })),
 }));
-import { addDoc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { createVideo, updateVideo, deleteVideo, togglePublish, loadVideoForEdit, rebuildPublicVideoLibraryCache, VideoCacheRefreshError } from '../../src/features/video-library-admin/services/videos.service';
+import { addDoc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
+import { createVideo, updateVideo, deleteVideo, deleteVideos, togglePublish, loadVideoForEdit, rebuildPublicVideoLibraryCache, VideoCacheRefreshError } from '../../src/features/video-library-admin/services/videos.service';
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -44,6 +45,18 @@ it.each([
   fetch.mockResolvedValue({ ok: true });
   await rebuildPublicVideoLibraryCache();
   expect(fetch.mock.calls[1][0]).toContain('/rebuild');
+});
+
+it('deletes the selected videos once, then rebuilds the public cache once', async () => {
+  const batchDelete = jest.fn();
+  const commit = jest.fn(async () => {});
+  writeBatch.mockReturnValue({ delete: batchDelete, commit });
+  fetch.mockResolvedValue({ ok: true, json: async () => ({}) });
+  await deleteVideos(['a', 'b', 'a', ' ']);
+  expect(commit).toHaveBeenCalledTimes(1);
+  expect(batchDelete).toHaveBeenCalledTimes(2);
+  expect(fetch).toHaveBeenCalledTimes(1);
+  expect(fetch.mock.calls[0][0]).toContain('/rebuild');
 });
 
 it('restores serialized Firestore timestamps before reopening the editor', async () => {

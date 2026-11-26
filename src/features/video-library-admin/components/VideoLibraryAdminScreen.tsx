@@ -12,6 +12,7 @@ import {
   createVideo,
   loadVideoForEdit,
   deleteVideo,
+  deleteVideos,
   listVideosPage,
   listVideoCategories,
   addVideoCategory,
@@ -195,6 +196,7 @@ const sortVideosForAdminTable = (
 
 export default function VideoLibraryAdminScreen() {
   const [videos, setVideos] = useState<VideoDoc[]>([]);
+  const [selectedVideoIds, setSelectedVideoIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingPage, setLoadingPage] = useState(false);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
@@ -541,12 +543,40 @@ export default function VideoLibraryAdminScreen() {
     setSuccessMessage("");
     try {
       await deleteVideo(video.id);
+      setSelectedVideoIds((current) => current.filter((id) => id !== video.id));
       setCacheWarning("");
       await refreshVideos();
       setSuccessMessage("Videoclip șters.");
     } catch (error) {
       if (error instanceof VideoCacheRefreshError) {
         setCacheWarning("Videoul a fost șters, dar cache-ul nu a fost actualizat.");
+        await refreshVideos();
+      } else setErrorMessage("Ștergerea a eșuat.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    const ids = selectedVideoIds.filter((id) => sortedVideos.some((video) => video.id === id));
+    if (ids.length === 0) return;
+    const confirmed = window.confirm(
+      `Ștergi ${ids.length} videoclipuri din panou? Nu vor mai apărea în aplicație. Fișierele din Bunny rămân neschimbate.`
+    );
+    if (!confirmed) return;
+    setLoading(true);
+    setErrorMessage("");
+    setSuccessMessage("");
+    try {
+      await deleteVideos(ids);
+      setSelectedVideoIds([]);
+      setCacheWarning("");
+      await refreshVideos();
+      setSuccessMessage(`${ids.length} videoclipuri au fost șterse.`);
+    } catch (error) {
+      if (error instanceof VideoCacheRefreshError) {
+        setSelectedVideoIds([]);
+        setCacheWarning("Videoclipurile au fost șterse, dar cache-ul nu a fost actualizat.");
         await refreshVideos();
       } else setErrorMessage("Ștergerea a eșuat.");
     } finally {
@@ -1041,9 +1071,36 @@ export default function VideoLibraryAdminScreen() {
               </div>
             </div>
 
+            {selectedVideoIds.length > 0 ? (
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                <span className="text-sm font-medium text-red-900">
+                  {selectedVideoIds.length} videoclipuri selectate
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedVideoIds([])}
+                    className="rounded-lg border border-red-200 bg-white px-3 py-2 text-sm font-medium text-red-800"
+                  >
+                    Anulează selecția
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeleteSelected}
+                    disabled={loading || loadingPage}
+                    className="rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                  >
+                    Șterge selectate
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
             <VideoTable
               videos={sortedVideos}
               loading={loading || loadingPage}
+              selectedIds={selectedVideoIds}
+              onSelectedIdsChange={setSelectedVideoIds}
               sortField={sortField}
               sortDirection={sortDirection}
               onSortChange={handleSortChange}

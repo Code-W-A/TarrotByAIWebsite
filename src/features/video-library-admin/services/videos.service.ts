@@ -13,6 +13,7 @@ import {
   startAfter,
   updateDoc,
   Timestamp,
+  writeBatch,
 } from "firebase/firestore";
 import { db } from "../../../../firebase";
 import type {
@@ -229,6 +230,26 @@ export async function deleteVideo(id: string): Promise<void> {
   const ref = doc(db, COLLECTION_NAME, id);
   await deleteDoc(ref);
   await rebuildPublicCacheAfterMutation("delete");
+}
+
+export async function deleteVideos(ids: string[]): Promise<void> {
+  const unique = [...new Set(ids.map((id) => id.trim()).filter(Boolean))];
+  if (unique.length === 0) return;
+  let deletedAny = false;
+  try {
+    for (let index = 0; index < unique.length; index += 450) {
+      const batch = writeBatch(db);
+      unique.slice(index, index + 450).forEach((id) => {
+        batch.delete(doc(db, COLLECTION_NAME, id));
+      });
+      await batch.commit();
+      deletedAny = true;
+    }
+  } catch (error) {
+    if (deletedAny) await rebuildPublicCacheAfterMutation("deleteMany");
+    throw error;
+  }
+  await rebuildPublicCacheAfterMutation("deleteMany");
 }
 
 export async function togglePublish(id: string, isPublished: boolean): Promise<void> {
